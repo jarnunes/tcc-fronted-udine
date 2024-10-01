@@ -3,6 +3,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#212121"
@@ -22,8 +23,8 @@
         android:id="@+id/chatRecycler"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/bottomToolbar"
-        android:layout_below="@+id/chatToolbar" />
+        android:layout_below="@+id/chatToolbar"
+        android:layout_above="@+id/bottomToolbar" />
 
     <RelativeLayout
         android:id="@+id/bottomToolbar"

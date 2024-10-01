@@ -4,10 +4,10 @@ import java.io.Serializable
 
 class Message : Serializable {
 
-
     var message: String? = null
     var sentId: String? = null
     var imagePath: String? = null
+    private lateinit var userLocation: UserLocation
 
     constructor() {}
 
@@ -15,6 +15,15 @@ class Message : Serializable {
         this.message = messageIn
         this.sentId = senderIdIn
         this.imagePath = imagePathIn
+        this.userLocation = UserLocation()
+    }
+
+    fun setUserLocation(userLocation: UserLocation) {
+        this.userLocation = userLocation
+    }
+
+    fun getUserLocation(): UserLocation {
+        return this.userLocation
     }
 
 }
