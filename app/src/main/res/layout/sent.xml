@@ -17,8 +17,16 @@
             android:layout_height="wrap_content"
             android:padding="10dp"
             android:text="This is a sent message"
-            android:textColor="#202020"
-            android:textSize="18sp" />
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:visibility="gone"/>
+
+        <ImageView
+            android:id="@+id/img_sent_message"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            android:contentDescription="Image sent for user"
+            android:visibility="gone" />
     </RelativeLayout>
 
 </RelativeLayout>

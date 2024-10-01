@@ -1,13 +1,16 @@
 <resources>
     <string name="app_name">UdineTour</string>
     <string name="action_settings">Settings</string>
+    <string name="action_clear_chat">Limpar Mensagens</string>
 
     <!-- Chat Messages -->
 
     <!-- Strings used for fragments for navigation -->
     <string name="chat_input_message">Faça uma pergunta…</string>
-    <string name="chat_send_message_desc">Icone para envio da mensagem</string>
-
+    <string name="chat_icon_send_message_desc">Icone para envio da mensagem</string>
+    <string name="chat_icon_cam_desc">Icone para captura de fotos</string>
+    <string name="chat_icon_mic_desc">Icone para captura de audio</string>
+    <string name="file_provider">com.jarnunes.udinetour.provider</string>
 
 
 

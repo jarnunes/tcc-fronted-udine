@@ -1,6 +1,7 @@
 package com.jarnunes.udinetour.adapter
 
 import android.content.Context
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -42,21 +43,25 @@ class MessageAdapter(private val context: Context, private val messageList: Arra
             itemSentCode
         else
             itemReceiveCode
-
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val currentMessage = messageList[position]
         if (holder.javaClass == SentViewHolder::class.java) {
-            // do the stuff for sent fie holder
-
             val viewHolder = holder as SentViewHolder
-            holder.sentMessage.text = currentMessage.message
+            if (currentMessage.imagePath != null) {
+                holder.sentImage.visibility = View.VISIBLE
+                holder.sentMessage.visibility = View.GONE
+                holder.sentImage.setImageURI(Uri.parse(currentMessage.imagePath))
+            } else {
+                holder.sentImage.visibility = View.GONE
+                holder.sentMessage.visibility = View.VISIBLE
+                holder.sentMessage.text = currentMessage.message
+            }
         } else {
             // do dtuff for receive view holder
             val viewHolder = holder as ReceiveViewHolder
             holder.receiveMessage.text = currentMessage.message
-
         }
     }
 
