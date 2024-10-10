@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -42,6 +41,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var chatSessionInfo: ChatSessionInfo
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var currentLocation: UserLocation
 
     private var fileHelper = FileHelper()
     private var currentImagePath: String? = null
@@ -52,21 +52,19 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.chatToolbar)
-
         initialize()
-        createChatSessionInfo()
+        configureSessionChatInfo()
+        configureMainView()
 
-        messageList = ArrayList()
-        messageAdapter = MessageAdapter(this, messageList)
+        loadStoredMessages()
+        configureListenerForSendMessages()
+        configureListenerForImageCapture()
 
-        // logic for add data to recycler view
-        binding.chatRecycler.layoutManager = LinearLayoutManager(this)
-        binding.chatRecycler.adapter = messageAdapter
+        addWatcherToShowHideSendButton(binding.chatInputMessage, binding.chatSendMessageIcon)
+        configureGetterForUserLocation()
+    }
 
-        val storedMessageList = fileHelper.readMessages(applicationContext)
-        messageList.clear()
-        messageList.addAll(storedMessageList)
-
+    private fun configureListenerForSendMessages() {
         // add the message to database
         binding.chatSendMessageIcon.setOnClickListener {
             val message = binding.chatInputMessage.text.toString()
@@ -77,25 +75,39 @@ class MainActivity : AppCompatActivity() {
             }
 
             val messageObject = Message(message, chatSessionInfo.getSenderUID(), null)
-            val userLocation = getCurrentLocationOnce()
-            messageObject.setUserLocation(userLocation)
-
+            messageObject.setUserLocation(currentLocation)
             messageList.add(messageObject)
 
             val systemMessage = createSystemMessage()
-            systemMessage.message += " | latitude: " + userLocation.latitude + " | longitude: " + userLocation.longitude
+            systemMessage.message += "\nlongitude: " + currentLocation.longitude + "\nlatitude: " + currentLocation.latitude
             messageList.add(systemMessage)
 
-            binding.chatInputMessage.setText("")
             fileHelper.writeMessages(messageList, applicationContext)
             currentImagePath = null
             messageAdapter.notifyDataSetChanged()
+
+            binding.chatInputMessage.setText("")
+            binding.chatRecycler.scrollToPosition(messageList.size - 1)
         }
 
-        setChatImageEventListener()
-        addWatcherToShowHideSendButton(binding.chatInputMessage, binding.chatSendMessageIcon)
+    }
 
-        // configure user location.
+    private fun loadStoredMessages() {
+        val storedMessageList = fileHelper.readMessages(applicationContext)
+        messageList.clear()
+        messageList.addAll(storedMessageList)
+    }
+
+    private fun configureMainView() {
+        binding.chatRecycler.layoutManager = LinearLayoutManager(this)
+        binding.chatRecycler.adapter = messageAdapter
+        binding.chatRecycler.scrollToPosition(messageList.size - 1)
+        val layoutManager = LinearLayoutManager(this)
+        layoutManager.stackFromEnd = true
+        binding.chatRecycler.layoutManager = layoutManager
+    }
+
+    private fun configureGetterForUserLocation() {
         val locationPermissionRequest = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->
@@ -125,23 +137,20 @@ class MainActivity : AppCompatActivity() {
                 Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION
             )
         )
-
     }
 
     private fun getCurrentLocation() {
-        val locationRequest = LocationRequest.Builder(TimeUnit.SECONDS.toMillis(30))
+        val locationRequest = LocationRequest
+            .Builder(TimeUnit.SECONDS.toMillis(30))
             .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
             .setMinUpdateIntervalMillis(TimeUnit.SECONDS.toMillis(5)).build()
 
-        // Callback que será acionado quando houver uma nova localização
         val locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
-                for (location in locationResult.locations) {
-                    val latitude = location.latitude
-                    val longitude = location.longitude
-                    Log.i("INFO", "Este é um log")
-                    Log.i("INFO", "latitude: $latitude")
-                    Log.i("INFO", "longitude: $longitude")
+                val lastLocation = locationResult.lastLocation
+                if (lastLocation != null) {
+                    currentLocation.latitude = lastLocation.latitude
+                    currentLocation.longitude = lastLocation.longitude
                 }
             }
         }
@@ -169,33 +178,17 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun getCurrentLocationOnce(): UserLocation {
-        if (ActivityCompat.checkSelfPermission(
-                this, Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this, Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return UserLocation(null, null)
-        }
-
-        var userLocation = UserLocation(null, null)
-        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            userLocation = UserLocation(location.latitude.toString(), location.longitude.toString())
-        }.addOnFailureListener { exception ->
-            Log.e("ERROR", "Erro ao obter localização: ${exception.message}")
-        }
-
-        return userLocation
-    }
-
     private fun initialize() {
         this.imageURI = fileHelper.createImageURI(this)
         this.fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        this.currentLocation = UserLocation()
         // fusedLocationClient.removeLocationUpdates(locationCallback)
+
+        this.messageList = ArrayList()
+        this.messageAdapter = MessageAdapter(this, messageList)
     }
 
-    private fun createChatSessionInfo() {
+    private fun configureSessionChatInfo() {
         this.deviceHelper = DeviceHelper()
         this.chatSessionInfo = ChatSessionInfo()
         this.chatSessionInfo.setSenderName("DeviceName")
@@ -206,7 +199,7 @@ class MainActivity : AppCompatActivity() {
         this.chatSessionInfo.setReceiverRoom(chatSessionInfo.getSenderUID() + chatSessionInfo.getReceiverUID())
     }
 
-    private fun setChatImageEventListener() {
+    private fun configureListenerForImageCapture() {
         // When image was captured
         val contract = registerForActivityResult(ActivityResultContracts.TakePicture()) {
             currentImagePath = imageURI.toString()

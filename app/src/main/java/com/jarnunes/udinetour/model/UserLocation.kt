@@ -2,9 +2,9 @@ package com.jarnunes.udinetour.model
 
 import java.io.Serializable
 
-class UserLocation(latitude: String?, longitude: String?) : Serializable {
-    var latitude: String? = latitude
-    var longitude: String? = longitude
+class UserLocation(latitude: Double?, longitude: Double?) : Serializable {
+    var latitude: Double? = latitude
+    var longitude: Double? = longitude
 
     constructor() : this(null, null) {}
 }
