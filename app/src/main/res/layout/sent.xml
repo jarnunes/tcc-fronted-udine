@@ -16,7 +16,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="10dp"
-            android:text="This is a sent message"
+            android:text="@string/txt_sent_message_description"
             android:textColor="@color/white"
             android:textSize="18sp"
             android:visibility="gone"/>
@@ -25,8 +25,40 @@
             android:id="@+id/img_sent_message"
             android:layout_width="300dp"
             android:layout_height="300dp"
-            android:contentDescription="Image sent for user"
+            android:contentDescription="@string/txt_sent_image_description"
             android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/audioMessageLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="10dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/playAudioButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/round_play_arrow_24" />
+
+            <SeekBar
+                android:id="@+id/audioSeekBar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="0"
+                android:padding="8dp"/>
+
+            <TextView
+                android:id="@+id/audioDuration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0:00"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"/>
+        </LinearLayout>
     </RelativeLayout>
 
 </RelativeLayout>

@@ -41,7 +41,7 @@
             android:id="@+id/chatSendMessageLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_toStartOf="@+id/chatCam"
+            android:layout_toStartOf="@+id/audioRecorder"
             android:background="@drawable/rounded_background" >
 
             <EditText
@@ -67,18 +67,7 @@
         </RelativeLayout>
 
         <ImageView
-            android:id="@+id/chatCam"
-            android:layout_width="55dp"
-            android:layout_height="54dp"
-            android:layout_centerVertical="true"
-            android:layout_margin="0dp"
-            android:layout_toStartOf="@+id/chatMicro"
-            android:contentDescription="@string/chat_icon_cam_desc"
-            android:padding="10dp"
-            app:srcCompat="@drawable/baseline_camera_alt_24" />
-
-        <ImageView
-            android:id="@+id/chatMicro"
+            android:id="@+id/audioRecorder"
             android:layout_width="55dp"
             android:layout_height="54dp"
             android:layout_alignParentEnd="true"
@@ -87,6 +76,5 @@
             android:padding="10dp"
             app:srcCompat="@drawable/baseline_mic_24" />
     </RelativeLayout>
-
 
 </RelativeLayout>

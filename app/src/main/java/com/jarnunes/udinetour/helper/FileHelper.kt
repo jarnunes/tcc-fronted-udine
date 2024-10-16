@@ -59,4 +59,30 @@ class FileHelper {
         val image = File(context.filesDir, "udine_tour_${System.currentTimeMillis()}.png")
         return FileProvider.getUriForFile(context, "com.jarnunes.udinetour.provider", image)
     }
+
+    fun createAudioURI(context: Context): Uri {
+        val audioDir = File(context.filesDir, "audios")
+        if (!audioDir.exists()) {
+            audioDir.mkdir()
+        }
+
+        val audioFile = File(context.filesDir, "udine_tour_audio_${System.currentTimeMillis()}.mp4")
+        return FileProvider.getUriForFile(context, "com.jarnunes.udinetour.provider", audioFile)
+    }
+
+    fun saveAudioToFile(context: Context, uri: Uri, audioData: ByteArray) {
+        try {
+            // Abre o OutputStream usando o ContentResolver
+            val outputStream = context.contentResolver.openOutputStream(uri)
+
+            // Verifica se o OutputStream não é nulo
+            outputStream?.use {
+                // Escreve os dados do áudio no arquivo
+                it.write(audioData)
+                it.flush()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }

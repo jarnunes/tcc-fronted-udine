@@ -6,15 +6,16 @@ class Message : Serializable {
 
     var message: String? = null
     var sentId: String? = null
-    var imagePath: String? = null
+    var messageType: MessageType? = null
+    var resourcePath: String? = null
     private lateinit var userLocation: UserLocation
 
     constructor() {}
 
-    constructor(messageIn: String?, senderIdIn: String?, imagePathIn: String?) {
+    constructor(messageIn: String?, senderIdIn: String?, resourcePathIn: String?) {
         this.message = messageIn
         this.sentId = senderIdIn
-        this.imagePath = imagePathIn
+        this.resourcePath = resourcePathIn
         this.userLocation = UserLocation()
     }
 

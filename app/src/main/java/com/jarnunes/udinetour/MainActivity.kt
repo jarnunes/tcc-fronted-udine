@@ -29,10 +29,22 @@ import com.jarnunes.udinetour.helper.DeviceHelper
 import com.jarnunes.udinetour.helper.FileHelper
 import com.jarnunes.udinetour.model.ChatSessionInfo
 import com.jarnunes.udinetour.model.Message
+import com.jarnunes.udinetour.model.MessageType
 import com.jarnunes.udinetour.model.UserLocation
+import com.jarnunes.udinetour.recorder.AndroidAudioPlayer
+import com.jarnunes.udinetour.recorder.AndroidAudioRecorder
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
+
+    private val recorder by lazy {
+        AndroidAudioRecorder(applicationContext)
+    }
+
+    private val player by lazy {
+        AndroidAudioPlayer(applicationContext)
+    }
 
     private lateinit var messageAdapter: MessageAdapter
     private lateinit var messageList: ArrayList<Message>
@@ -45,6 +57,7 @@ class MainActivity : AppCompatActivity() {
 
     private var fileHelper = FileHelper()
     private var currentImagePath: String? = null
+    private var audioFile: File? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,10 +71,59 @@ class MainActivity : AppCompatActivity() {
 
         loadStoredMessages()
         configureListenerForSendMessages()
-        configureListenerForImageCapture()
+        configureListenerForAudioRecorder()
 
         addWatcherToShowHideSendButton(binding.chatInputMessage, binding.chatSendMessageIcon)
         configureGetterForUserLocation()
+    }
+
+    private fun configureListenerForAudioRecorder() {
+        val recordPermission = Manifest.permission.RECORD_AUDIO
+
+        // Solicitar permissão, se não concedida
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                recordPermission
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(this, arrayOf(recordPermission), 200)
+        }
+
+        binding.audioRecorder.setOnClickListener {
+            // Alterna entre iniciar e parar a gravação
+            if (recorder.isRecording()) {
+                stopAudioRecording()
+            } else {
+                startAudioRecording()
+            }
+        }
+    }
+
+    private fun startAudioRecording() {
+        // Define o caminho do arquivo de áudio a ser salvo
+        audioFile = File(filesDir, "audio_${System.currentTimeMillis()}.mp4")
+
+        // Inicializa o gravador de áudio
+        recorder.start(audioFile!!)
+
+        // Atualizar UI (exemplo: alterar ícone para "parar")
+        binding.audioRecorder.setImageResource(R.drawable.sharp_mic_off_24)
+    }
+
+    private fun stopAudioRecording() {
+        // Para a gravação de áudio
+        recorder.stop()
+
+        // Atualizar UI (exemplo: alterar ícone para "microfone")
+        binding.audioRecorder.setImageResource(R.drawable.baseline_mic_24)
+
+        // Aqui você pode adicionar o áudio como uma mensagem
+        audioFile?.let {
+            val messageObject = Message(null, chatSessionInfo.getSenderUID(), it.absolutePath)
+            messageObject.messageType = MessageType.AUDIO
+            messageList.add(messageObject)
+            messageAdapter.notifyDataSetChanged()
+        }
     }
 
     private fun configureListenerForSendMessages() {
@@ -71,10 +133,12 @@ class MainActivity : AppCompatActivity() {
 
             if (currentImagePath != null) {
                 val messageObject = Message(null, chatSessionInfo.getSenderUID(), currentImagePath)
+                messageObject.messageType = MessageType.IMAGE
                 messageList.add(messageObject)
             }
 
             val messageObject = Message(message, chatSessionInfo.getSenderUID(), null)
+            messageObject.messageType = MessageType.TEXT
             messageObject.setUserLocation(currentLocation)
             messageList.add(messageObject)
 
@@ -199,17 +263,6 @@ class MainActivity : AppCompatActivity() {
         this.chatSessionInfo.setReceiverRoom(chatSessionInfo.getSenderUID() + chatSessionInfo.getReceiverUID())
     }
 
-    private fun configureListenerForImageCapture() {
-        // When image was captured
-        val contract = registerForActivityResult(ActivityResultContracts.TakePicture()) {
-            currentImagePath = imageURI.toString()
-        }
-
-        // When button was clicked
-        this.binding.chatCam.setOnClickListener {
-            contract.launch(imageURI)
-        }
-    }
 
     private fun addWatcherToShowHideSendButton(messageText: EditText, sendButton: ImageView) {
         messageText.addTextChangedListener(object : TextWatcher {
