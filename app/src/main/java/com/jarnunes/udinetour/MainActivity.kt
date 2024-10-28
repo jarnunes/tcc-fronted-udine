@@ -68,6 +68,7 @@ class MainActivity : AppCompatActivity() {
         initialize()
         configureSessionChatInfo()
         configureMainView()
+        configureGoogleMaps()
 
         loadStoredMessages()
         configureListenerForSendMessages()
@@ -75,6 +76,10 @@ class MainActivity : AppCompatActivity() {
 
         addWatcherToShowHideSendButton(binding.chatInputMessage, binding.chatSendMessageIcon)
         configureGetterForUserLocation()
+    }
+
+    private fun configureGoogleMaps() {
+        //binding.chatRecycler
     }
 
     private fun configureListenerForAudioRecorder() {
@@ -137,16 +142,23 @@ class MainActivity : AppCompatActivity() {
                 messageList.add(messageObject)
             }
 
-            val messageObject = Message(message, chatSessionInfo.getSenderUID(), null)
+            val messageObject = Message()
+            messageObject.message = message
             messageObject.messageType = MessageType.TEXT
+            messageObject.sentId = chatSessionInfo.getSenderUID()
             messageObject.setUserLocation(currentLocation)
             messageList.add(messageObject)
-
-            val systemMessage = createSystemMessage()
-            systemMessage.message += "\nlongitude: " + currentLocation.longitude + "\nlatitude: " + currentLocation.latitude
-            messageList.add(systemMessage)
-
             fileHelper.writeMessages(messageList, applicationContext)
+
+
+            // Integração com o UDINE
+            val mapMessage = Message()
+            mapMessage.messageType = MessageType.MAP
+            mapMessage.sentId = "SYSTEM"
+            mapMessage.setUserLocation(messageObject.getUserLocation())
+            messageList.add(mapMessage)
+            fileHelper.writeMessages(messageList, applicationContext)
+
             currentImagePath = null
             messageAdapter.notifyDataSetChanged()
 
@@ -249,7 +261,7 @@ class MainActivity : AppCompatActivity() {
         // fusedLocationClient.removeLocationUpdates(locationCallback)
 
         this.messageList = ArrayList()
-        this.messageAdapter = MessageAdapter(this, messageList)
+        this.messageAdapter = MessageAdapter(this, messageList, supportFragmentManager)
     }
 
     private fun configureSessionChatInfo() {

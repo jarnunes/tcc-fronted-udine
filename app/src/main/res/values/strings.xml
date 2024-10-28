@@ -9,6 +9,10 @@
     <string name="txt_sent_image_description">This is a sent image</string>
     <string name="txt_sent_audio_description">This is a sent audio</string>
 
+    <!-- API -->
+    <string name="google_maps_api_key">AIzaSyBD2eZ2HXz0reytz_lzds4_Br1sMG0q_TI</string>
+
+
     <!-- Strings used for fragments for navigation -->
     <string name="chat_input_message">Faça uma pergunta…</string>
     <string name="chat_icon_send_message_desc">Icone para envio da mensagem</string>

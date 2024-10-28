@@ -6,5 +6,7 @@ enum class MessageType : Serializable {
 
     TEXT,
     IMAGE,
-    AUDIO
+    AUDIO,
+    MAP,
+    LOCATION
 }

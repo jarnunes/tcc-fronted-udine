@@ -12,8 +12,14 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.GONE
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.jarnunes.udinetour.R
 import com.jarnunes.udinetour.helper.DeviceHelper
 import com.jarnunes.udinetour.holder.ReceiveViewHolder
@@ -22,7 +28,11 @@ import com.jarnunes.udinetour.model.Message
 import com.jarnunes.udinetour.model.MessageType
 import com.jarnunes.udinetour.recorder.AndroidAudioPlayer
 
-class MessageAdapter(private val context: Context, private val messageList: ArrayList<Message>) :
+class MessageAdapter(
+    private val context: Context,
+    private val messageList: ArrayList<Message>,
+    private val fragmentManager: FragmentManager
+) :
     RecyclerView.Adapter<ViewHolder>() {
 
     private var deviceHelper = DeviceHelper()
@@ -37,7 +47,7 @@ class MessageAdapter(private val context: Context, private val messageList: Arra
         if (viewType == 1) {
             // inflate receive
             val view: View = LayoutInflater.from(context).inflate(R.layout.receive, parent, false)
-            return ReceiveViewHolder(view)
+            return ReceiveViewHolder(view, fragmentManager)
         } else {
             // inflate sent
             val view: View = LayoutInflater.from(context).inflate(R.layout.sent, parent, false)
@@ -61,51 +71,107 @@ class MessageAdapter(private val context: Context, private val messageList: Arra
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val currentMessage = messageList[position]
         if (holder.javaClass == SentViewHolder::class.java) {
-            val viewHolder = holder as SentViewHolder
-            when (currentMessage.messageType) {
-                MessageType.IMAGE -> {
-                    holder.sentImage.visibility = View.VISIBLE
-                    holder.sentAudioLayout.visibility = View.GONE
-                    holder.sentMessage.visibility = View.GONE
-                    holder.sentImage.setImageURI(Uri.parse(currentMessage.resourcePath))
-                }
+            configureSentViewHolder(holder, currentMessage)
+        } else {
+            configureReceiveViewHolder(holder, currentMessage)
+        }
+    }
 
-                MessageType.TEXT -> {
-                    holder.sentMessage.visibility = View.VISIBLE
-                    holder.sentImage.visibility = View.GONE
-                    holder.sentAudioLayout.visibility = View.GONE
-                    holder.sentMessage.text = currentMessage.message
-                }
+    private fun configureSentViewHolder(holder: ViewHolder, currentMessage: Message) {
+        val viewHolder = holder as SentViewHolder
+        when (currentMessage.messageType) {
+            MessageType.IMAGE -> {
+                viewHolder.sentImage.visibility = View.VISIBLE
+                viewHolder.sentAudioLayout.visibility = View.GONE
+                viewHolder.sentMessage.visibility = View.GONE
+                viewHolder.sentImage.setImageURI(Uri.parse(currentMessage.resourcePath))
+            }
 
-                MessageType.AUDIO -> {
-                    holder.sentAudioLayout.visibility = View.VISIBLE
-                    holder.sentAudio.visibility = View.VISIBLE
-                    holder.sentAudioSeekBar.visibility = View.VISIBLE
-                    holder.sentAudioDuration.visibility = View.VISIBLE
-                    holder.sentMessage.visibility = View.GONE
-                    holder.sentImage.visibility = View.GONE
+            MessageType.TEXT -> {
+                viewHolder.sentMessage.visibility = View.VISIBLE
+                viewHolder.sentImage.visibility = View.GONE
+                viewHolder.sentAudioLayout.visibility = View.GONE
+                viewHolder.sentMessage.text = currentMessage.message
+            }
 
-                    // Configurar o layout de áudio
-                    setupAudioPlayer(
-                        holder.sentAudio,
-                        holder.sentAudioSeekBar,
-                        holder.sentAudioDuration,
-                        currentMessage.resourcePath!!
-                    )
+            MessageType.AUDIO -> {
+                viewHolder.sentAudioLayout.visibility = View.VISIBLE
+                viewHolder.sentAudio.visibility = View.VISIBLE
+                viewHolder.sentAudioSeekBar.visibility = View.VISIBLE
+                viewHolder.sentAudioDuration.visibility = View.VISIBLE
+                viewHolder.sentMessage.visibility = View.GONE
+                viewHolder.sentImage.visibility = View.GONE
 
-                }
+                // Configurar o layout de áudio
+                setupAudioPlayer(
+                    viewHolder.sentAudio,
+                    viewHolder.sentAudioSeekBar,
+                    viewHolder.sentAudioDuration,
+                    currentMessage.resourcePath!!
+                )
+            }
 
-                null -> {
-                    /*Do nothing*/
+            MessageType.MAP -> {}
+            MessageType.LOCATION -> {}
+            null -> {
+                /*Do nothing*/
+            }
+        }
+    }
+
+    private fun configureReceiveViewHolder(holder: ViewHolder, currentMessage: Message) {
+        val viewHolder = holder as ReceiveViewHolder
+
+        when (currentMessage.messageType) {
+            MessageType.TEXT -> {
+                viewHolder.receiveMessage.text = currentMessage.message
+                viewHolder.receiveMessage.visibility = View.VISIBLE
+            }
+
+            MessageType.AUDIO -> {
+                viewHolder.receiveMessage.visibility = View.GONE
+                viewHolder.receiveMap.visibility = GONE
+
+                viewHolder.receiveAudio.visibility = View.VISIBLE
+                viewHolder.receiveAudioLayout.visibility = View.VISIBLE
+                viewHolder.receiveAudioDuration.visibility = View.VISIBLE
+                viewHolder.receiveAudioSeekBar.visibility = View.VISIBLE
+            }
+
+            MessageType.MAP -> {
+                viewHolder.receiveMessage.visibility = View.GONE
+                viewHolder.receiveAudio.visibility = View.GONE
+                viewHolder.receiveAudioLayout.visibility = View.GONE
+                viewHolder.receiveAudioDuration.visibility = View.GONE
+                viewHolder.receiveAudioSeekBar.visibility = View.GONE
+
+                viewHolder.receiveMap.visibility = View.VISIBLE
+
+                // Extrai latitude e longitude da mensagem
+                val userLocation = currentMessage.getUserLocation()
+                if (userLocation.latitude != null && userLocation.longitude != null) {
+
+                    // Configura o mapa usando FragmentManager e as coordenadas
+                    // Checa e adiciona o mapa ao FrameLayout, se necessário
+                    val mapFragment = fragmentManager.findFragmentById(R.id.map_container) as? SupportMapFragment
+                        ?: SupportMapFragment.newInstance().also {
+                            fragmentManager.beginTransaction().replace(R.id.map_container, it).commit()
+                        }
+
+                    mapFragment.getMapAsync { googleMap ->
+                        val location = LatLng(userLocation.latitude!!, userLocation.longitude!!)
+                        googleMap.addMarker(MarkerOptions().position(location).title("Localização"))
+                        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
+                    }
                 }
             }
 
-        } else {
-            // do dtuff for receive view holder
-            val viewHolder = holder as ReceiveViewHolder
-            holder.receiveMessage.text = currentMessage.message
+            MessageType.IMAGE -> {}
+            MessageType.LOCATION -> {}
+            null -> {}
         }
     }
+
 
     @SuppressLint("SetTextI18n")
     private fun setupAudioPlayer(

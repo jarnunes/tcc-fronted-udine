@@ -1,9 +1,10 @@
 package com.jarnunes.udinetour.model
 
 import java.io.Serializable
+import java.time.LocalDateTime
 
 class Message : Serializable {
-
+    var reference: LocalDateTime? = null
     var message: String? = null
     var sentId: String? = null
     var messageType: MessageType? = null
