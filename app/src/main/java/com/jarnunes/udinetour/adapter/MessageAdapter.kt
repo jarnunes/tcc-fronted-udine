@@ -24,8 +24,8 @@ import com.jarnunes.udinetour.R
 import com.jarnunes.udinetour.helper.DeviceHelper
 import com.jarnunes.udinetour.holder.ReceiveViewHolder
 import com.jarnunes.udinetour.holder.SentViewHolder
-import com.jarnunes.udinetour.model.Message
-import com.jarnunes.udinetour.model.MessageType
+import com.jarnunes.udinetour.message.Message
+import com.jarnunes.udinetour.message.MessageType
 import com.jarnunes.udinetour.recorder.AndroidAudioPlayer
 
 class MessageAdapter(

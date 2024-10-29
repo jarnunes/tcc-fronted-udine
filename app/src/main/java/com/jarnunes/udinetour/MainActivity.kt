@@ -27,10 +27,12 @@ import com.jarnunes.udinetour.adapter.MessageAdapter
 import com.jarnunes.udinetour.databinding.ActivityMainBinding
 import com.jarnunes.udinetour.helper.DeviceHelper
 import com.jarnunes.udinetour.helper.FileHelper
-import com.jarnunes.udinetour.model.ChatSessionInfo
-import com.jarnunes.udinetour.model.Message
-import com.jarnunes.udinetour.model.MessageType
-import com.jarnunes.udinetour.model.UserLocation
+import com.jarnunes.udinetour.maps.PlacesApiServiceImpl
+import com.jarnunes.udinetour.maps.SearchPlacesQuery
+import com.jarnunes.udinetour.message.ChatSessionInfo
+import com.jarnunes.udinetour.message.Message
+import com.jarnunes.udinetour.message.MessageType
+import com.jarnunes.udinetour.message.UserLocation
 import com.jarnunes.udinetour.recorder.AndroidAudioPlayer
 import com.jarnunes.udinetour.recorder.AndroidAudioRecorder
 import java.io.File
@@ -159,6 +161,8 @@ class MainActivity : AppCompatActivity() {
             messageList.add(mapMessage)
             fileHelper.writeMessages(messageList, applicationContext)
 
+            PlacesApiServiceImpl(applicationContext).getNearbyPlaces(createSearchPlacesQuery())
+
             currentImagePath = null
             messageAdapter.notifyDataSetChanged()
 
@@ -166,6 +170,14 @@ class MainActivity : AppCompatActivity() {
             binding.chatRecycler.scrollToPosition(messageList.size - 1)
         }
 
+    }
+
+    private fun createSearchPlacesQuery(): SearchPlacesQuery {
+        return SearchPlacesQuery(
+            userLocation = currentLocation,
+            type = "tourist_attraction",
+            radius = 1000
+        )
     }
 
     private fun loadStoredMessages() {
@@ -225,8 +237,13 @@ class MainActivity : AppCompatActivity() {
             override fun onLocationResult(locationResult: LocationResult) {
                 val lastLocation = locationResult.lastLocation
                 if (lastLocation != null) {
-                    currentLocation.latitude = lastLocation.latitude
-                    currentLocation.longitude = lastLocation.longitude
+                    //TODO: pegando fixo temporariamente, pois no emulador nãoe está funcionando
+                    // -19.918892780804857, -43.93867202055777
+
+                    currentLocation.latitude = -19.918892780804857
+                    currentLocation.longitude = -43.93867202055777
+                    // currentLocation.latitude = lastLocation.latitude
+                    // currentLocation.longitude = lastLocation.longitude
                 }
             }
         }

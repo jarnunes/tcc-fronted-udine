@@ -1,9 +1,7 @@
 package com.jarnunes.udinetour
 
-import android.Manifest
-import androidx.activity.result.contract.ActivityResultContracts
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.jarnunes.udinetour.model.UserLocation
+import com.jarnunes.udinetour.message.UserLocation
 
 class LocationService {
 

@@ -1,4 +1,4 @@
-package com.jarnunes.udinetour.model
+package com.jarnunes.udinetour.message
 
 import java.io.Serializable
 

@@ -3,10 +3,9 @@ package com.jarnunes.udinetour.helper
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
-import com.jarnunes.udinetour.model.Message
+import com.jarnunes.udinetour.message.Message
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.InvalidClassException
 import java.io.ObjectInputStream
