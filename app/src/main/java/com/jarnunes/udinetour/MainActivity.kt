@@ -12,6 +12,9 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -29,6 +32,8 @@ import com.jarnunes.udinetour.helper.DeviceHelper
 import com.jarnunes.udinetour.helper.FileHelper
 import com.jarnunes.udinetour.maps.PlacesApiServiceImpl
 import com.jarnunes.udinetour.maps.SearchPlacesQuery
+import com.jarnunes.udinetour.maps.location.ActivityResultProvider
+import com.jarnunes.udinetour.maps.location.UserLocationService
 import com.jarnunes.udinetour.message.ChatSessionInfo
 import com.jarnunes.udinetour.message.Message
 import com.jarnunes.udinetour.message.MessageType
@@ -38,7 +43,7 @@ import com.jarnunes.udinetour.recorder.AndroidAudioRecorder
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), ActivityResultProvider {
 
     private val recorder by lazy {
         AndroidAudioRecorder(applicationContext)
@@ -56,6 +61,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var chatSessionInfo: ChatSessionInfo
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var currentLocation: UserLocation
+    private lateinit var locationService: UserLocationService
 
     private var fileHelper = FileHelper()
     private var currentImagePath: String? = null
@@ -76,7 +82,21 @@ class MainActivity : AppCompatActivity() {
         configureListenerForAudioRecorder()
 
         addWatcherToShowHideSendButton(binding.chatInputMessage, binding.chatSendMessageIcon)
-        configureGetterForUserLocation()
+        configureCurrentLocationCallback()
+    }
+
+    private fun configureCurrentLocationCallback() {
+        locationService.getUserLocation { lastLocation ->
+            currentLocation.latitude = -19.918892780804857
+            currentLocation.longitude = -43.93867202055777
+            println(lastLocation)
+            // currentLocation.latitude = lastLocation?.latitude
+            // currentLocation.longitude = lastLocation?.longitude
+        }
+    }
+
+    private fun configureAudioRecorder(){
+
     }
 
     private fun configureListenerForAudioRecorder() {
@@ -195,86 +215,13 @@ class MainActivity : AppCompatActivity() {
         binding.chatRecycler.layoutManager = layoutManager
     }
 
-    private fun configureGetterForUserLocation() {
-        val locationPermissionRequest = registerForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            when {
-                permissions.getOrDefault(
-                    Manifest.permission.ACCESS_FINE_LOCATION, false
-                ) -> {
-                    // Permissão concedida para localização precisa
-                    getCurrentLocation()
-                }
-
-                permissions.getOrDefault(
-                    Manifest.permission.ACCESS_COARSE_LOCATION, false
-                ) -> {
-                    // Permissão concedida para localização aproximada
-                    getCurrentLocation()
-                }
-
-                // Nenhuma permissão concedida
-                else -> {}
-            }
-        }
-
-        locationPermissionRequest.launch(
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-        )
-    }
-
-    private fun getCurrentLocation() {
-        val locationRequest = LocationRequest
-            .Builder(TimeUnit.SECONDS.toMillis(30))
-            .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-            .setMinUpdateIntervalMillis(TimeUnit.SECONDS.toMillis(5)).build()
-
-        val locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                val lastLocation = locationResult.lastLocation
-                if (lastLocation != null) {
-                    //TODO: pegando fixo temporariamente, pois no emulador nãoe está funcionando
-                    // -19.918892780804857, -43.93867202055777
-
-                    currentLocation.latitude = -19.918892780804857
-                    currentLocation.longitude = -43.93867202055777
-                    // currentLocation.latitude = lastLocation.latitude
-                    // currentLocation.longitude = lastLocation.longitude
-                }
-            }
-        }
-
-        // Solicitar atualizações de localização
-        if (ActivityCompat.checkSelfPermission(
-                this, Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this, Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return
-        }
-        fusedLocationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            Looper.getMainLooper() // Para executar o callback na thread principal
-        )
-    }
-
     private fun initialize() {
         this.imageURI = fileHelper.createImageURI(this)
         //this.fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         this.currentLocation = UserLocation()
         // fusedLocationClient.removeLocationUpdates(locationCallback)
 
+        this.locationService = UserLocationService(this, this);
         this.messageList = ArrayList()
         this.messageAdapter = MessageAdapter(this, messageList, supportFragmentManager)
     }
@@ -350,6 +297,13 @@ class MainActivity : AppCompatActivity() {
 
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    override fun <I, O> getActivityResultLauncher(
+        contract: ActivityResultContract<I, O>,
+        callback: ActivityResultCallback<O>
+    ): ActivityResultLauncher<I> {
+        return registerForActivityResult(contract, callback)
     }
 
 }
