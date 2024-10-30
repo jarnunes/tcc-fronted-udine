@@ -10,7 +10,7 @@
     <string name="txt_sent_audio_description">This is a sent audio</string>
 
     <!-- API -->
-    <string name="google_maps_api_key">??????</string>
+    <string name="google_maps_api_key">AIzaSyBD2eZ2HXz0reytz_lzds4_Br1sMG0q_TI</string>
     <string name="google_places_url">https://maps.googleapis.com/maps/api/place/</string>
 
 

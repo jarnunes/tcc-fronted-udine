@@ -11,9 +11,10 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class PlacesApiServiceImpl(private val context: Context) {
 
-    fun getNearbyPlaces(placesQuery: SearchPlacesQuery): ArrayList<PlaceResult> {
-        val placesResult = ArrayList<PlaceResult>()
-
+    fun getNearbyPlaces(
+        placesQuery: SearchPlacesQuery,
+        callback: (ArrayList<PlaceResult>) -> Unit
+    ) {
         val retrofit = Retrofit.Builder()
             .baseUrl(context.getString(R.string.google_places_url))
             .addConverterFactory(GsonConverterFactory.create())
@@ -35,20 +36,25 @@ class PlacesApiServiceImpl(private val context: Context) {
                 response: Response<PlacesResponse>
             ) {
                 if (response.isSuccessful) {
+                    val placesResult = ArrayList<PlaceResult>()
                     val places = response.body()?.results
                     places?.forEach { place ->
                         placesResult.add(place)
                     }
+                    // Chama a callback com os resultados
+                    callback(placesResult)
                 } else {
                     Log.e("API Error", "Response unsuccessful: ${response.errorBody()?.string()}")
+                    // Retorna lista vazia em caso de erro
+                    callback(ArrayList())
                 }
             }
 
             override fun onFailure(call: Call<PlacesResponse>, t: Throwable) {
                 Log.e("API Error", "Failed to fetch places", t)
+                // Retorna lista vazia em caso de falha
+                callback(ArrayList())
             }
         })
-
-        return placesResult
     }
 }

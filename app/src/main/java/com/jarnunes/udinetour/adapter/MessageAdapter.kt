@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.GONE
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
@@ -38,6 +39,7 @@ class MessageAdapter(
     private var deviceHelper = DeviceHelper()
     private val itemReceiveCode = 1
     private val itemSentCode = 2
+    private var googleMap: GoogleMap? = null
 
     private val player by lazy {
         AndroidAudioPlayer(context)
@@ -146,23 +148,18 @@ class MessageAdapter(
                 viewHolder.receiveAudioSeekBar.visibility = View.GONE
 
                 viewHolder.receiveMap.visibility = View.VISIBLE
+//                initializeMap(holder, currentMessage)
 
-                // Extrai latitude e longitude da mensagem
                 val userLocation = currentMessage.getUserLocation()
-                if (userLocation.latitude != null && userLocation.longitude != null) {
+                val mapFragment = SupportMapFragment.newInstance()
+                fragmentManager.beginTransaction()
+                    .replace(viewHolder.receiveMap.id, mapFragment) // Adiciona um novo fragmento
+                    .commit()
 
-                    // Configura o mapa usando FragmentManager e as coordenadas
-                    // Checa e adiciona o mapa ao FrameLayout, se necessário
-                    val mapFragment = fragmentManager.findFragmentById(R.id.map_container) as? SupportMapFragment
-                        ?: SupportMapFragment.newInstance().also {
-                            fragmentManager.beginTransaction().replace(R.id.map_container, it).commit()
-                        }
-
-                    mapFragment.getMapAsync { googleMap ->
-                        val location = LatLng(userLocation.latitude!!, userLocation.longitude!!)
-                        googleMap.addMarker(MarkerOptions().position(location).title("Localização"))
-                        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
-                    }
+                mapFragment.getMapAsync { googleMap ->
+                    val location = LatLng(userLocation.latitude!!, userLocation.longitude!!)
+                    googleMap.addMarker(MarkerOptions().position(location).title("Localização"))
+                    googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
                 }
             }
 
@@ -170,6 +167,30 @@ class MessageAdapter(
             MessageType.LOCATION -> {}
             null -> {}
         }
+    }
+
+    private fun initializeMap(holder: ReceiveViewHolder, currentMessage: Message) {
+        if (googleMap == null) {
+            val mapFragment = SupportMapFragment.newInstance()
+            fragmentManager.beginTransaction()
+                .replace(holder.receiveMap.id, mapFragment)
+                .commit()
+
+            mapFragment.getMapAsync { map ->
+                googleMap = map
+                updateMapLocation(currentMessage)
+            }
+        } else {
+            updateMapLocation(currentMessage)
+        }
+    }
+
+    private fun updateMapLocation(message: Message) {
+        val userLocation = message.getUserLocation()
+        val location = LatLng(userLocation.latitude!!, userLocation.longitude!!)
+        googleMap?.clear()
+        googleMap?.addMarker(MarkerOptions().position(location).title("Localização"))
+        googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
     }
 
 

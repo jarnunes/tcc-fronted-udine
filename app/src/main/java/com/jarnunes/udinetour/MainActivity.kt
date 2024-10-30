@@ -70,7 +70,6 @@ class MainActivity : AppCompatActivity() {
         initialize()
         configureSessionChatInfo()
         configureMainView()
-        configureGoogleMaps()
 
         loadStoredMessages()
         configureListenerForSendMessages()
@@ -78,10 +77,6 @@ class MainActivity : AppCompatActivity() {
 
         addWatcherToShowHideSendButton(binding.chatInputMessage, binding.chatSendMessageIcon)
         configureGetterForUserLocation()
-    }
-
-    private fun configureGoogleMaps() {
-        //binding.chatRecycler
     }
 
     private fun configureListenerForAudioRecorder() {
@@ -152,7 +147,6 @@ class MainActivity : AppCompatActivity() {
             messageList.add(messageObject)
             fileHelper.writeMessages(messageList, applicationContext)
 
-
             // Integração com o UDINE
             val mapMessage = Message()
             mapMessage.messageType = MessageType.MAP
@@ -161,7 +155,14 @@ class MainActivity : AppCompatActivity() {
             messageList.add(mapMessage)
             fileHelper.writeMessages(messageList, applicationContext)
 
-            PlacesApiServiceImpl(applicationContext).getNearbyPlaces(createSearchPlacesQuery())
+            PlacesApiServiceImpl(applicationContext).getNearbyPlaces(createSearchPlacesQuery()) { placesResult ->
+                // Manipule a lista `placesResult` aqui, por exemplo:
+                if (placesResult.isNotEmpty()) {
+                    println(placesResult.size)
+                } else {
+                    println(placesResult.size)
+                }
+            }
 
             currentImagePath = null
             messageAdapter.notifyDataSetChanged()
@@ -169,7 +170,6 @@ class MainActivity : AppCompatActivity() {
             binding.chatInputMessage.setText("")
             binding.chatRecycler.scrollToPosition(messageList.size - 1)
         }
-
     }
 
     private fun createSearchPlacesQuery(): SearchPlacesQuery {
@@ -197,8 +197,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun configureGetterForUserLocation() {
         val locationPermissionRequest = registerForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions()
-        ) { permissions ->
+            ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             when {
                 permissions.getOrDefault(
                     Manifest.permission.ACCESS_FINE_LOCATION, false
@@ -214,9 +213,8 @@ class MainActivity : AppCompatActivity() {
                     getCurrentLocation()
                 }
 
-                else -> {
-                    // Nenhuma permissão concedida
-                }
+                // Nenhuma permissão concedida
+                else -> {}
             }
         }
 
@@ -273,7 +271,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun initialize() {
         this.imageURI = fileHelper.createImageURI(this)
-        this.fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        //this.fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         this.currentLocation = UserLocation()
         // fusedLocationClient.removeLocationUpdates(locationCallback)
 
