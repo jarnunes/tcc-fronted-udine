@@ -1,10 +1,7 @@
 package com.jarnunes.udinetour
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.net.Uri
+import android.annotation.SuppressLint
 import android.os.Bundle
-import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.Menu
@@ -15,17 +12,9 @@ import android.widget.ImageView
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
 import com.jarnunes.udinetour.adapter.MessageAdapter
 import com.jarnunes.udinetour.databinding.ActivityMainBinding
 import com.jarnunes.udinetour.helper.DeviceHelper
@@ -40,32 +29,22 @@ import com.jarnunes.udinetour.message.MessageType
 import com.jarnunes.udinetour.message.UserLocation
 import com.jarnunes.udinetour.recorder.AndroidAudioPlayer
 import com.jarnunes.udinetour.recorder.AndroidAudioRecorder
+import com.jarnunes.udinetour.recorder.AudioService
 import java.io.File
-import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity(), ActivityResultProvider {
-
-    private val recorder by lazy {
-        AndroidAudioRecorder(applicationContext)
-    }
-
-    private val player by lazy {
-        AndroidAudioPlayer(applicationContext)
-    }
 
     private lateinit var messageAdapter: MessageAdapter
     private lateinit var messageList: ArrayList<Message>
     private lateinit var deviceHelper: DeviceHelper
-    private lateinit var imageURI: Uri
     private lateinit var binding: ActivityMainBinding
     private lateinit var chatSessionInfo: ChatSessionInfo
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var currentLocation: UserLocation
     private lateinit var locationService: UserLocationService
+    private lateinit var audioService: AudioService;
 
     private var fileHelper = FileHelper()
     private var currentImagePath: String? = null
-    private var audioFile: File? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,6 +53,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         setContentView(binding.root)
         setSupportActionBar(binding.chatToolbar)
         initialize()
+        configureMessages()
         configureSessionChatInfo()
         configureMainView()
 
@@ -95,56 +75,28 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         }
     }
 
-    private fun configureAudioRecorder(){
-
+    private fun configureMessages() {
+        this.messageList = ArrayList()
+        this.messageAdapter = MessageAdapter(this, messageList, supportFragmentManager)
     }
 
+
+    @SuppressLint("NotifyDataSetChanged")
     private fun configureListenerForAudioRecorder() {
-        val recordPermission = Manifest.permission.RECORD_AUDIO
-
-        // Solicitar permissão, se não concedida
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                recordPermission
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(this, arrayOf(recordPermission), 200)
-        }
-
         binding.audioRecorder.setOnClickListener {
-            // Alterna entre iniciar e parar a gravação
-            if (recorder.isRecording()) {
-                stopAudioRecording()
-            } else {
-                startAudioRecording()
-            }
-        }
-    }
+            audioService.record(
+                afterStopRecordCallback = { audioFile ->
+                    binding.audioRecorder.setImageResource(R.drawable.baseline_mic_24)
 
-    private fun startAudioRecording() {
-        // Define o caminho do arquivo de áudio a ser salvo
-        audioFile = File(filesDir, "audio_${System.currentTimeMillis()}.mp4")
-
-        // Inicializa o gravador de áudio
-        recorder.start(audioFile!!)
-
-        // Atualizar UI (exemplo: alterar ícone para "parar")
-        binding.audioRecorder.setImageResource(R.drawable.sharp_mic_off_24)
-    }
-
-    private fun stopAudioRecording() {
-        // Para a gravação de áudio
-        recorder.stop()
-
-        // Atualizar UI (exemplo: alterar ícone para "microfone")
-        binding.audioRecorder.setImageResource(R.drawable.baseline_mic_24)
-
-        // Aqui você pode adicionar o áudio como uma mensagem
-        audioFile?.let {
-            val messageObject = Message(null, chatSessionInfo.getSenderUID(), it.absolutePath)
-            messageObject.messageType = MessageType.AUDIO
-            messageList.add(messageObject)
-            messageAdapter.notifyDataSetChanged()
+                    val messageObject = Message(null, chatSessionInfo.getSenderUID(), audioFile?.absolutePath)
+                    messageObject.messageType = MessageType.AUDIO
+                    messageList.add(messageObject)
+                    messageAdapter.notifyDataSetChanged()
+                },
+                afterStartRecordCallback = {
+                    binding.audioRecorder.setImageResource(R.drawable.sharp_mic_off_24)
+                }
+            )
         }
     }
 
@@ -216,14 +168,9 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
     }
 
     private fun initialize() {
-        this.imageURI = fileHelper.createImageURI(this)
-        //this.fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         this.currentLocation = UserLocation()
-        // fusedLocationClient.removeLocationUpdates(locationCallback)
-
         this.locationService = UserLocationService(this, this);
-        this.messageList = ArrayList()
-        this.messageAdapter = MessageAdapter(this, messageList, supportFragmentManager)
+        this.audioService = AudioService(this, this);
     }
 
     private fun configureSessionChatInfo() {
@@ -252,10 +199,6 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
 
             override fun afterTextChanged(s: Editable?) {}
         })
-    }
-
-    private fun createSystemMessage(): Message {
-        return Message("This is a system message", getReceiverUID(), null)
     }
 
     private fun getReceiverUID(): String {
