@@ -1,6 +1,7 @@
 package com.jarnunes.udinetour
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -17,33 +18,17 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.jarnunes.udinetour.adapter.MessageAdapter
 import com.jarnunes.udinetour.databinding.ActivityMainBinding
-import com.jarnunes.udinetour.helper.DeviceHelper
-import com.jarnunes.udinetour.helper.FileHelper
 import com.jarnunes.udinetour.maps.PlacesApiServiceImpl
-import com.jarnunes.udinetour.maps.SearchPlacesQuery
 import com.jarnunes.udinetour.maps.location.ActivityResultProvider
-import com.jarnunes.udinetour.maps.location.UserLocationService
-import com.jarnunes.udinetour.message.ChatSessionInfo
-import com.jarnunes.udinetour.message.Message
-import com.jarnunes.udinetour.message.MessageType
-import com.jarnunes.udinetour.message.UserLocation
-import com.jarnunes.udinetour.recorder.AndroidAudioPlayer
-import com.jarnunes.udinetour.recorder.AndroidAudioRecorder
+import com.jarnunes.udinetour.message.MessageService
 import com.jarnunes.udinetour.recorder.AudioService
-import java.io.File
 
 class MainActivity : AppCompatActivity(), ActivityResultProvider {
 
     private lateinit var messageAdapter: MessageAdapter
-    private lateinit var messageList: ArrayList<Message>
-    private lateinit var deviceHelper: DeviceHelper
     private lateinit var binding: ActivityMainBinding
-    private lateinit var chatSessionInfo: ChatSessionInfo
-    private lateinit var currentLocation: UserLocation
-    private lateinit var locationService: UserLocationService
-    private lateinit var audioService: AudioService;
-
-    private var fileHelper = FileHelper()
+    private lateinit var audioService: AudioService
+    private lateinit var messageService: MessageService
     private var currentImagePath: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,32 +39,17 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         setSupportActionBar(binding.chatToolbar)
         initialize()
         configureMessages()
-        configureSessionChatInfo()
         configureMainView()
-
-        loadStoredMessages()
         configureListenerForSendMessages()
         configureListenerForAudioRecorder()
-
         addWatcherToShowHideSendButton(binding.chatInputMessage, binding.chatSendMessageIcon)
-        configureCurrentLocationCallback()
-    }
-
-    private fun configureCurrentLocationCallback() {
-        locationService.getUserLocation { lastLocation ->
-            currentLocation.latitude = -19.918892780804857
-            currentLocation.longitude = -43.93867202055777
-            println(lastLocation)
-            // currentLocation.latitude = lastLocation?.latitude
-            // currentLocation.longitude = lastLocation?.longitude
-        }
     }
 
     private fun configureMessages() {
-        this.messageList = ArrayList()
-        this.messageAdapter = MessageAdapter(this, messageList, supportFragmentManager)
+        this.messageAdapter =
+            MessageAdapter(this, messageService.getAllMessages(), supportFragmentManager)
+        this.messageAdapter.notifyDataSetChanged()
     }
-
 
     @SuppressLint("NotifyDataSetChanged")
     private fun configureListenerForAudioRecorder() {
@@ -88,10 +58,11 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                 afterStopRecordCallback = { audioFile ->
                     binding.audioRecorder.setImageResource(R.drawable.baseline_mic_24)
 
-                    val messageObject = Message(null, chatSessionInfo.getSenderUID(), audioFile?.absolutePath)
-                    messageObject.messageType = MessageType.AUDIO
-                    messageList.add(messageObject)
+                    messageService.createUserAudioMessage(
+                        audioFile = audioFile!!
+                    )
                     messageAdapter.notifyDataSetChanged()
+                    binding.chatRecycler.scrollToPosition(messageService.messageListCount() - 1)
                 },
                 afterStartRecordCallback = {
                     binding.audioRecorder.setImageResource(R.drawable.sharp_mic_off_24)
@@ -100,90 +71,59 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private fun configureListenerForSendMessages() {
         // add the message to database
         binding.chatSendMessageIcon.setOnClickListener {
             val message = binding.chatInputMessage.text.toString()
 
-            if (currentImagePath != null) {
-                val messageObject = Message(null, chatSessionInfo.getSenderUID(), currentImagePath)
-                messageObject.messageType = MessageType.IMAGE
-                messageList.add(messageObject)
-            }
+            messageService.createUserTextMessage(message) { messages ->
+                messageService.createSystemTextMessage("SYSTEM_MESSAGE") {}
 
-            val messageObject = Message()
-            messageObject.message = message
-            messageObject.messageType = MessageType.TEXT
-            messageObject.sentId = chatSessionInfo.getSenderUID()
-            messageObject.setUserLocation(currentLocation)
-            messageList.add(messageObject)
-            fileHelper.writeMessages(messageList, applicationContext)
+                PlacesApiServiceImpl(this).getNearbyPlaces { placesResult ->
+                    // Manipule a lista `placesResult` aqui, por exemplo:
+                    if (placesResult.isNotEmpty()) {
+                        placesResult.forEach { place ->
+                            val msg = StringBuilder()
+                            msg.append("Name: ").append(place.name).append("\n")
+                            msg.append("Vicinity: ").append(place.vicinity).append("\n")
+                            msg.append("Latitude: ").append(place.geometry.location.lat)
+                                .append("\n")
+                            msg.append("Longitude: ").append(place.geometry.location.lng)
+                                .append("\n")
+                            messageService.createSystemTextMessage(msg.toString()) {}
+                        }
 
-            // Integração com o UDINE
-            val mapMessage = Message()
-            mapMessage.messageType = MessageType.MAP
-            mapMessage.sentId = "SYSTEM"
-            mapMessage.setUserLocation(messageObject.getUserLocation())
-            messageList.add(mapMessage)
-            fileHelper.writeMessages(messageList, applicationContext)
-
-            PlacesApiServiceImpl(applicationContext).getNearbyPlaces(createSearchPlacesQuery()) { placesResult ->
-                // Manipule a lista `placesResult` aqui, por exemplo:
-                if (placesResult.isNotEmpty()) {
-                    println(placesResult.size)
-                } else {
-                    println(placesResult.size)
+                        messageAdapter.notifyDataSetChanged()
+                        binding.chatRecycler.scrollToPosition(messages.size - 1)
+                    } else {
+                        //implementar registro de logs
+                    }
                 }
+
+                currentImagePath = null
+                messageAdapter.notifyDataSetChanged()
+
+                binding.chatInputMessage.setText("")
+                binding.chatRecycler.scrollToPosition(messages.size - 1)
             }
-
-            currentImagePath = null
-            messageAdapter.notifyDataSetChanged()
-
-            binding.chatInputMessage.setText("")
-            binding.chatRecycler.scrollToPosition(messageList.size - 1)
         }
-    }
-
-    private fun createSearchPlacesQuery(): SearchPlacesQuery {
-        return SearchPlacesQuery(
-            userLocation = currentLocation,
-            type = "tourist_attraction",
-            radius = 1000
-        )
-    }
-
-    private fun loadStoredMessages() {
-        val storedMessageList = fileHelper.readMessages(applicationContext)
-        messageList.clear()
-        messageList.addAll(storedMessageList)
     }
 
     private fun configureMainView() {
         binding.chatRecycler.layoutManager = LinearLayoutManager(this)
         binding.chatRecycler.adapter = messageAdapter
-        binding.chatRecycler.scrollToPosition(messageList.size - 1)
+        binding.chatRecycler.scrollToPosition(messageService.messageListCount() - 1)
         val layoutManager = LinearLayoutManager(this)
         layoutManager.stackFromEnd = true
         binding.chatRecycler.layoutManager = layoutManager
     }
 
     private fun initialize() {
-        this.currentLocation = UserLocation()
-        this.locationService = UserLocationService(this, this);
-        this.audioService = AudioService(this, this);
+        this.audioService = AudioService(this)
+        this.messageService = MessageService(this)
+        this.messageService.loadMessages()
     }
-
-    private fun configureSessionChatInfo() {
-        this.deviceHelper = DeviceHelper()
-        this.chatSessionInfo = ChatSessionInfo()
-        this.chatSessionInfo.setSenderName("DeviceName")
-        this.chatSessionInfo.setSenderUID(deviceHelper.getDeviceId(applicationContext))
-        this.chatSessionInfo.setReceiverName(getString(R.string.app_name))
-        this.chatSessionInfo.setReceiverUID(getReceiverUID())
-        this.chatSessionInfo.setSenderRoom(chatSessionInfo.getReceiverUID() + chatSessionInfo.getSenderUID())
-        this.chatSessionInfo.setReceiverRoom(chatSessionInfo.getSenderUID() + chatSessionInfo.getReceiverUID())
-    }
-
 
     private fun addWatcherToShowHideSendButton(messageText: EditText, sendButton: ImageView) {
         messageText.addTextChangedListener(object : TextWatcher {
@@ -210,6 +150,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         return true
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_bar_delete -> {
@@ -227,11 +168,8 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                     "Sim"
                 ) { dialogInterface, i ->
                     // Limpa todas as mensagens
-                    messageList.clear()
+                    messageService.deleteAllMessages()
                     messageAdapter.notifyDataSetChanged()
-
-                    // Limpa o armazenamento de mensagens (caso esteja salvando)
-                    fileHelper.writeMessages(messageList, applicationContext)
                 }
 
                 alert.create().show()
@@ -249,4 +187,11 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         return registerForActivityResult(contract, callback)
     }
 
+    override fun getAppContext(): Context {
+        return this.applicationContext
+    }
+
+    override fun getMessageAdapter(): MessageAdapter {
+        return this.messageAdapter
+    }
 }

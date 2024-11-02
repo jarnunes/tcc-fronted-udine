@@ -1,7 +1,6 @@
 package com.jarnunes.udinetour.adapter
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Handler
@@ -21,16 +20,18 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.jarnunes.udinetour.MainActivity
 import com.jarnunes.udinetour.R
 import com.jarnunes.udinetour.helper.DeviceHelper
 import com.jarnunes.udinetour.holder.ReceiveViewHolder
 import com.jarnunes.udinetour.holder.SentViewHolder
+import com.jarnunes.udinetour.maps.PlacesApiServiceImpl
 import com.jarnunes.udinetour.message.Message
 import com.jarnunes.udinetour.message.MessageType
 import com.jarnunes.udinetour.recorder.AndroidAudioPlayer
 
 class MessageAdapter(
-    private val context: Context,
+    private val mainActivity: MainActivity,
     private val messageList: ArrayList<Message>,
     private val fragmentManager: FragmentManager
 ) :
@@ -42,17 +43,18 @@ class MessageAdapter(
     private var googleMap: GoogleMap? = null
 
     private val player by lazy {
-        AndroidAudioPlayer(context)
+        AndroidAudioPlayer(mainActivity)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         if (viewType == 1) {
             // inflate receive
-            val view: View = LayoutInflater.from(context).inflate(R.layout.receive, parent, false)
+            val view: View =
+                LayoutInflater.from(mainActivity).inflate(R.layout.receive, parent, false)
             return ReceiveViewHolder(view, fragmentManager)
         } else {
             // inflate sent
-            val view: View = LayoutInflater.from(context).inflate(R.layout.sent, parent, false)
+            val view: View = LayoutInflater.from(mainActivity).inflate(R.layout.sent, parent, false)
             return SentViewHolder(view)
         }
     }
@@ -64,7 +66,7 @@ class MessageAdapter(
     override fun getItemViewType(position: Int): Int {
         val currentMessage = messageList[position]
 
-        return if (deviceHelper.getDeviceId(context) == currentMessage.sentId)
+        return if (deviceHelper.getUserDeviceId(mainActivity) == currentMessage.sentId)
             itemSentCode
         else
             itemReceiveCode
@@ -159,6 +161,22 @@ class MessageAdapter(
                 mapFragment.getMapAsync { googleMap ->
                     val location = LatLng(userLocation.latitude!!, userLocation.longitude!!)
                     googleMap.addMarker(MarkerOptions().position(location).title("Localização"))
+
+//                    PlacesApiServiceImpl(mainActivity).getNearbyPlaces { placesResult ->
+//                        // Manipule a lista `placesResult` aqui, por exemplo:
+//                        if (placesResult.isNotEmpty()) {
+//                            placesResult.forEach { place ->
+//                                val loc = LatLng(userLocation.latitude!!, userLocation.longitude!!)
+//                                googleMap.addMarker(
+//                                    MarkerOptions().position(loc).title("Ponto Turístico")
+//                                )
+//                            }
+//                            this.notifyDataSetChanged()
+//                        } else {
+//                            //implementar registro de logs
+//                        }
+//                    }
+
                     googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
                 }
             }

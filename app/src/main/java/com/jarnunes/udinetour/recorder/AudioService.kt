@@ -1,27 +1,21 @@
 package com.jarnunes.udinetour.recorder
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import com.jarnunes.udinetour.MainActivity
 import java.io.File
 
-class AudioService(
-    private val context: Context,
-    private val mainActivity: MainActivity,
-
-    ) {
-
+class AudioService(private val mainActivity: MainActivity) {
 
     private var audioFile: File? = null
 
     private val recorder by lazy {
-        AndroidAudioRecorder(context)
+        AndroidAudioRecorder(mainActivity.applicationContext)
     }
 
     private val player by lazy {
-        AndroidAudioPlayer(context)
+        AndroidAudioPlayer(mainActivity.applicationContext)
     }
 
 
@@ -33,7 +27,7 @@ class AudioService(
 
         // request permission
         if (ActivityCompat.checkSelfPermission(
-                context, recordPermission
+                mainActivity.applicationContext, recordPermission
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(mainActivity, arrayOf(recordPermission), 200)

@@ -7,7 +7,11 @@ import android.provider.Settings
 class DeviceHelper {
 
     @SuppressLint("HardwareIds")
-    fun getDeviceId(context: Context): String {
+    fun getUserDeviceId(context: Context): String {
         return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+    }
+
+    fun getSystemDeviceId(): String {
+        return "SYSTEM"
     }
 }

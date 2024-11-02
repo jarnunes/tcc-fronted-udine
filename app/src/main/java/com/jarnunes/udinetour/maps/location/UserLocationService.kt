@@ -2,7 +2,6 @@ package com.jarnunes.udinetour.maps.location
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Looper
@@ -15,16 +14,25 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.jarnunes.udinetour.message.UserLocation
 import java.util.concurrent.TimeUnit
 
-class UserLocationService(
-    private val context: Context,
-    private val activityResultProvider: ActivityResultProvider) {
+class UserLocationService(private val activityResultProvider: ActivityResultProvider)  {
 
     private var fusedLocationClient: FusedLocationProviderClient =
-        LocationServices.getFusedLocationProviderClient(context)
+        LocationServices.getFusedLocationProviderClient(activityResultProvider.getAppContext())
 
-    fun getUserLocation(callback:  (Location?) -> Unit) {
+    fun getCurrentLocation(callback: (UserLocation) -> Unit) {
+        getUserLocation { lastLocation ->
+            val userLocation = UserLocation()
+            userLocation.latitude = -19.918892780804857
+            userLocation.longitude = -43.93867202055777
+            callback(userLocation)
+            println(lastLocation)
+        }
+    }
+
+    fun getUserLocation(callback: (Location?) -> Unit) {
         val locationPermissionRequest = activityResultProvider.getActivityResultLauncher(
             ActivityResultContracts.RequestMultiplePermissions(),
             ActivityResultCallback { permissions ->
@@ -44,7 +52,7 @@ class UserLocationService(
     }
 
     @SuppressLint("MissingPermission")
-    private fun getLocation(callback:  (Location?) -> Unit){
+    private fun getLocation(callback: (Location?) -> Unit) {
 
         if (hasPermission(Manifest.permission.ACCESS_FINE_LOCATION) &&
             hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -59,7 +67,7 @@ class UserLocationService(
 
     private fun hasPermission(resource: String): Boolean {
         return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-            context,
+            activityResultProvider.getAppContext(),
             resource
         )
     }
@@ -71,7 +79,7 @@ class UserLocationService(
             .setMinUpdateIntervalMillis(TimeUnit.SECONDS.toMillis(5)).build()
     }
 
-    private fun createLocationCallback(callback:  (Location?) -> Unit): LocationCallback {
+    private fun createLocationCallback(callback: (Location?) -> Unit): LocationCallback {
         val locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 val lastLocation = locationResult.lastLocation

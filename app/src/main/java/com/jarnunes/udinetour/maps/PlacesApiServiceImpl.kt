@@ -1,22 +1,29 @@
 package com.jarnunes.udinetour.maps
 
-import android.content.Context
 import android.util.Log
+import com.jarnunes.udinetour.MainActivity
 import com.jarnunes.udinetour.R
+import com.jarnunes.udinetour.maps.location.LocationServiceBase
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class PlacesApiServiceImpl(private val context: Context) {
+class PlacesApiServiceImpl(private var activity: MainActivity): LocationServiceBase(activity) {
 
-    fun getNearbyPlaces(
-        placesQuery: SearchPlacesQuery,
-        callback: (ArrayList<PlaceResult>) -> Unit
-    ) {
+    private fun createSearchPlacesQuery(): SearchPlacesQuery {
+        return SearchPlacesQuery(
+            userLocation = userLocation,
+            type = "tourist_attraction",
+            radius = 1000
+        )
+    }
+
+    fun getNearbyPlaces(callback: (ArrayList<PlaceResult>) -> Unit) {
+        val placesQuery = createSearchPlacesQuery()
         val retrofit = Retrofit.Builder()
-            .baseUrl(context.getString(R.string.google_places_url))
+            .baseUrl(activity.getString(R.string.google_places_url))
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
@@ -27,7 +34,7 @@ class PlacesApiServiceImpl(private val context: Context) {
             locationString,
             placesQuery.radius,
             placesQuery.type,
-            context.getString(R.string.google_maps_api_key)
+            activity.getString(R.string.google_maps_api_key)
         )
 
         call.enqueue(object : Callback<PlacesResponse> {
