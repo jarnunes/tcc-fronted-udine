@@ -18,7 +18,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.jarnunes.udinetour.adapter.MessageAdapter
 import com.jarnunes.udinetour.databinding.ActivityMainBinding
-import com.jarnunes.udinetour.maps.PlacesApiServiceImpl
 import com.jarnunes.udinetour.maps.location.ActivityResultProvider
 import com.jarnunes.udinetour.message.MessageService
 import com.jarnunes.udinetour.recorder.AudioService
@@ -45,6 +44,8 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         addWatcherToShowHideSendButton(binding.chatInputMessage, binding.chatSendMessageIcon)
     }
 
+
+    @SuppressLint("NotifyDataSetChanged")
     private fun configureMessages() {
         this.messageAdapter =
             MessageAdapter(this, messageService.getAllMessages(), supportFragmentManager)
@@ -78,29 +79,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
             val message = binding.chatInputMessage.text.toString()
 
             messageService.createUserTextMessage(message) { messages ->
-                messageService.createSystemTextMessage("SYSTEM_MESSAGE") {}
-
-                PlacesApiServiceImpl(this).getNearbyPlaces { placesResult ->
-                    // Manipule a lista `placesResult` aqui, por exemplo:
-                    if (placesResult.isNotEmpty()) {
-                        placesResult.forEach { place ->
-                            val msg = StringBuilder()
-                            msg.append("Name: ").append(place.name).append("\n")
-                            msg.append("Vicinity: ").append(place.vicinity).append("\n")
-                            msg.append("Latitude: ").append(place.geometry.location.lat)
-                                .append("\n")
-                            msg.append("Longitude: ").append(place.geometry.location.lng)
-                                .append("\n")
-                            messageService.createSystemTextMessage(msg.toString()) {}
-                        }
-
-                        messageAdapter.notifyDataSetChanged()
-                        binding.chatRecycler.scrollToPosition(messages.size - 1)
-                    } else {
-                        //implementar registro de logs
-                    }
-                }
-
+                //messageService.createSystemTextMessage("SYSTEM_MESSAGE") {}
                 currentImagePath = null
                 messageAdapter.notifyDataSetChanged()
 
@@ -141,10 +120,6 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         })
     }
 
-    private fun getReceiverUID(): String {
-        return getString(R.string.app_name) + "UID"
-    }
-
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
         return true
@@ -155,20 +130,20 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         return when (item.itemId) {
             R.id.action_bar_delete -> {
                 val alert = AlertDialog.Builder(this)
-                alert.setTitle("Deletar")
-                alert.setMessage("Confirma exclusão das mensagens?")
+                alert.setTitle(getString(R.string.dialog_delete_title))
+                alert.setMessage(getString(R.string.dialog_delete_message))
                 alert.setCancelable(false)
                 alert.setNegativeButton(
-                    "Não"
-                ) { dialogInterface, i ->
+                    getString(R.string.dialog_confirmation_no)
+                ) { dialogInterface, _ ->
                     dialogInterface.cancel()
                 }
 
                 alert.setPositiveButton(
-                    "Sim"
-                ) { dialogInterface, i ->
-                    // Limpa todas as mensagens
+                    getString(R.string.dialog_confirmation_yes)
+                ) { _, _ ->
                     messageService.deleteAllMessages()
+                    messageService.createMapMessage()
                     messageAdapter.notifyDataSetChanged()
                 }
 

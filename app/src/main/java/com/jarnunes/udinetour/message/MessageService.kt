@@ -1,5 +1,6 @@
 package com.jarnunes.udinetour.message
 
+import android.annotation.SuppressLint
 import com.google.android.gms.common.util.CollectionUtils
 import com.jarnunes.udinetour.MainActivity
 import com.jarnunes.udinetour.helper.DeviceHelper
@@ -12,8 +13,7 @@ class MessageService(private val activity: MainActivity) : LocationServiceBase(a
     private var fileHelper: FileHelper = FileHelper()
     private var deviceHelper: DeviceHelper = DeviceHelper()
 
-    fun createUserTextMessage(
-        message: String,
+    fun createUserTextMessage(        message: String,
         beforeCreateMessageCallback: (ArrayList<Message>) -> Unit
     ) {
         createTextMessage(message, SenderMessageType.USER, beforeCreateMessageCallback)
@@ -67,10 +67,12 @@ class MessageService(private val activity: MainActivity) : LocationServiceBase(a
         fileHelper.writeMessages(messageList, activity.applicationContext)
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     fun loadMessages() {
         val storedMessageList = fileHelper.readMessages(activity.applicationContext)
         messageList.clear()
         messageList.addAll(storedMessageList)
+        //todo: REMOVER
         deleteAllMessages()
 
         if (CollectionUtils.isEmpty(messageList)) {
@@ -81,6 +83,9 @@ class MessageService(private val activity: MainActivity) : LocationServiceBase(a
 
                 if (!createdMapMessage) {
                     createMapMessage()
+                    //TODO: remover
+                    createSampleAudioMessage()
+
                     this.activity.getMessageAdapter().notifyDataSetChanged()
                     createdMapMessage = true
                 }
@@ -93,8 +98,17 @@ class MessageService(private val activity: MainActivity) : LocationServiceBase(a
     }
 
     fun deleteAllMessages() {
+        deleteFileMessages()
         messageList.clear()
         fileHelper.writeMessages(messageList, activity.applicationContext)
+    }
+
+    private fun deleteFileMessages() {
+        messageList
+            .filter { msg -> msg.messageType.isAudio() || msg.messageType.isImage() }
+            .filter { msg -> msg.resourcePath != null }
+            .map { msg -> msg.resourcePath.toString() }
+            .forEach { resource -> fileHelper.deleteFileByPath(activity, resource) }
     }
 
     fun getAllMessages(): ArrayList<Message> {
@@ -107,6 +121,18 @@ class MessageService(private val activity: MainActivity) : LocationServiceBase(a
         mapMessage.sentId = getSentId(SenderMessageType.SYSTEM)
         mapMessage.setUserLocation(userLocation)
         messageList.add(mapMessage)
+        fileHelper.writeMessages(messageList, activity.applicationContext)
+    }
+
+
+    fun createSampleAudioMessage() {
+        val message = Message()
+        message.messageType = MessageType.AUDIO
+        message.sentId = getSentId(SenderMessageType.SYSTEM)
+        message.setUserLocation(userLocation)
+        message.resourcePath = FileHelper().createSampleAudioFile(activity).absolutePath
+
+        messageList.add(message)
         fileHelper.writeMessages(messageList, activity.applicationContext)
     }
 

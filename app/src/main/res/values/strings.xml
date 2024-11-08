@@ -21,6 +21,21 @@
     <string name="chat_icon_mic_desc">Icone para captura de audio</string>
     <string name="file_provider">com.jarnunes.udinetour.provider</string>
 
+    <!-- Maps -->
+    <string name="maps_current_location">Localização</string>
+
+
+    <!-- Dialogs -->
+    <string name="dialog_delete_title">Excluir</string>
+    <string name="dialog_delete_message">Confirmar exclusão de mensagens?</string>
+    <string name="dialog_confirmation_yes">Sim</string>
+    <string name="dialog_confirmation_no">Não</string>
+
+    <!-- Info -->
+    <string name="success_delete_file">Arquivo %s removido com sucesso</string>
+
+    <!-- Exceptions -->
+    <string name="exception_delete_file">Ocorreu um erro ao deletar o arquivo %s. Detalhes: %s</string>
 
 
     <string name="first_fragment_label">First Fragment</string>

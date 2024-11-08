@@ -3,16 +3,16 @@ package com.jarnunes.udinetour.maps
 import android.util.Log
 import com.jarnunes.udinetour.MainActivity
 import com.jarnunes.udinetour.R
-import com.jarnunes.udinetour.maps.location.LocationServiceBase
+import com.jarnunes.udinetour.message.UserLocation
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class PlacesApiServiceImpl(private var activity: MainActivity): LocationServiceBase(activity) {
+class PlacesApiServiceImpl(private var activity: MainActivity) {
 
-    private fun createSearchPlacesQuery(): SearchPlacesQuery {
+    private fun createSearchPlacesQuery(userLocation: UserLocation): SearchPlacesQuery {
         return SearchPlacesQuery(
             userLocation = userLocation,
             type = "tourist_attraction",
@@ -20,8 +20,10 @@ class PlacesApiServiceImpl(private var activity: MainActivity): LocationServiceB
         )
     }
 
-    fun getNearbyPlaces(callback: (ArrayList<PlaceResult>) -> Unit) {
-        val placesQuery = createSearchPlacesQuery()
+    fun getNearbyPlaces(
+        userLocation: UserLocation,
+        callback: (ArrayList<PlaceResult>) -> Unit) {
+        val placesQuery = createSearchPlacesQuery(userLocation)
         val retrofit = Retrofit.Builder()
             .baseUrl(activity.getString(R.string.google_places_url))
             .addConverterFactory(GsonConverterFactory.create())
@@ -52,14 +54,14 @@ class PlacesApiServiceImpl(private var activity: MainActivity): LocationServiceB
                     callback(placesResult)
                 } else {
                     Log.e("API Error", "Response unsuccessful: ${response.errorBody()?.string()}")
-                    // Retorna lista vazia em caso de erro
+                    // empty list on error
                     callback(ArrayList())
                 }
             }
 
             override fun onFailure(call: Call<PlacesResponse>, t: Throwable) {
                 Log.e("API Error", "Failed to fetch places", t)
-                // Retorna lista vazia em caso de falha
+                // empty list on error
                 callback(ArrayList())
             }
         })

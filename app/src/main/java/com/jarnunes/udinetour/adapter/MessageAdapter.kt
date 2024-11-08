@@ -19,15 +19,18 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.MarkerOptions
 import com.jarnunes.udinetour.MainActivity
 import com.jarnunes.udinetour.R
 import com.jarnunes.udinetour.helper.DeviceHelper
 import com.jarnunes.udinetour.holder.ReceiveViewHolder
 import com.jarnunes.udinetour.holder.SentViewHolder
+import com.jarnunes.udinetour.maps.PlaceType
 import com.jarnunes.udinetour.maps.PlacesApiServiceImpl
 import com.jarnunes.udinetour.message.Message
 import com.jarnunes.udinetour.message.MessageType
+import com.jarnunes.udinetour.message.UserLocation
 import com.jarnunes.udinetour.recorder.AndroidAudioPlayer
 
 class MessageAdapter(
@@ -40,7 +43,6 @@ class MessageAdapter(
     private var deviceHelper = DeviceHelper()
     private val itemReceiveCode = 1
     private val itemSentCode = 2
-    private var googleMap: GoogleMap? = null
 
     private val player by lazy {
         AndroidAudioPlayer(mainActivity)
@@ -117,9 +119,6 @@ class MessageAdapter(
 
             MessageType.MAP -> {}
             MessageType.LOCATION -> {}
-            null -> {
-                /*Do nothing*/
-            }
         }
     }
 
@@ -148,67 +147,54 @@ class MessageAdapter(
                 viewHolder.receiveAudioLayout.visibility = View.GONE
                 viewHolder.receiveAudioDuration.visibility = View.GONE
                 viewHolder.receiveAudioSeekBar.visibility = View.GONE
-
                 viewHolder.receiveMap.visibility = View.VISIBLE
-//                initializeMap(holder, currentMessage)
 
                 val userLocation = currentMessage.getUserLocation()
                 val mapFragment = SupportMapFragment.newInstance()
                 fragmentManager.beginTransaction()
-                    .replace(viewHolder.receiveMap.id, mapFragment) // Adiciona um novo fragmento
+                    .replace(viewHolder.receiveMap.id, mapFragment)
                     .commit()
 
                 mapFragment.getMapAsync { googleMap ->
-                    val location = LatLng(userLocation.latitude!!, userLocation.longitude!!)
-                    googleMap.addMarker(MarkerOptions().position(location).title("Localização"))
-
-//                    PlacesApiServiceImpl(mainActivity).getNearbyPlaces { placesResult ->
-//                        // Manipule a lista `placesResult` aqui, por exemplo:
-//                        if (placesResult.isNotEmpty()) {
-//                            placesResult.forEach { place ->
-//                                val loc = LatLng(userLocation.latitude!!, userLocation.longitude!!)
-//                                googleMap.addMarker(
-//                                    MarkerOptions().position(loc).title("Ponto Turístico")
-//                                )
-//                            }
-//                            this.notifyDataSetChanged()
-//                        } else {
-//                            //implementar registro de logs
-//                        }
-//                    }
-
-                    googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
+                    removeDefaultConfiguration(googleMap)
+                    addCurrentLocationPointMarker(googleMap, userLocation)
+                    addTouristsPointMarker(googleMap, userLocation)
                 }
             }
 
             MessageType.IMAGE -> {}
             MessageType.LOCATION -> {}
-            null -> {}
         }
     }
 
-    private fun initializeMap(holder: ReceiveViewHolder, currentMessage: Message) {
-        if (googleMap == null) {
-            val mapFragment = SupportMapFragment.newInstance()
-            fragmentManager.beginTransaction()
-                .replace(holder.receiveMap.id, mapFragment)
-                .commit()
-
-            mapFragment.getMapAsync { map ->
-                googleMap = map
-                updateMapLocation(currentMessage)
-            }
-        } else {
-            updateMapLocation(currentMessage)
-        }
+    private fun removeDefaultConfiguration(googleMap: GoogleMap) {
+        googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(mainActivity, R.raw.map_style))
     }
 
-    private fun updateMapLocation(message: Message) {
-        val userLocation = message.getUserLocation()
+    private fun addCurrentLocationPointMarker(googleMap: GoogleMap, userLocation: UserLocation) {
         val location = LatLng(userLocation.latitude!!, userLocation.longitude!!)
-        googleMap?.clear()
-        googleMap?.addMarker(MarkerOptions().position(location).title("Localização"))
-        googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
+        val title = mainActivity.getString(R.string.maps_current_location)
+        googleMap.addMarker(MarkerOptions().position(location).title(title))
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
+    }
+
+    private fun addTouristsPointMarker(googleMap: GoogleMap, userLocation: UserLocation) {
+        PlacesApiServiceImpl(mainActivity).getNearbyPlaces(userLocation) { placesResult ->
+            if (placesResult.isNotEmpty()) {
+                placesResult.forEach { place ->
+                    val placeLoc = place.geometry.location
+                    val customIcon = PlaceType.bitmapDescriptorFactory(place.types)
+                    val loc = LatLng(placeLoc.lat, placeLoc.lng)
+                    val marker = googleMap.addMarker(
+                        MarkerOptions().position(loc).title(place.name).icon(customIcon)
+                    )
+
+                    marker?.showInfoWindow()
+                }
+            } else {
+                //implementar registro de logs
+            }
+        }
     }
 
 

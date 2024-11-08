@@ -8,5 +8,26 @@ enum class MessageType : Serializable {
     IMAGE,
     AUDIO,
     MAP,
-    LOCATION
+    LOCATION;
+
+    fun isText(): Boolean {
+        return this == TEXT
+    }
+
+    fun isImage(): Boolean {
+        return this == IMAGE
+    }
+
+    fun isAudio(): Boolean {
+        return this == AUDIO
+    }
+
+    fun isMap(): Boolean {
+        return this == MAP
+    }
+
+    fun isLocation(): Boolean {
+        return this == LOCATION
+    }
+
 }

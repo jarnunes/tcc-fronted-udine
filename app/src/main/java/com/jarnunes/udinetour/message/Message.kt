@@ -7,7 +7,7 @@ class Message : Serializable {
     var reference: LocalDateTime? = null
     var message: String? = null
     var sentId: String? = null
-    var messageType: MessageType? = null
+    var messageType: MessageType = MessageType.TEXT
     var resourcePath: String? = null
     private lateinit var userLocation: UserLocation
 

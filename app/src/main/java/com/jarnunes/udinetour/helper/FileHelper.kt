@@ -2,7 +2,10 @@ package com.jarnunes.udinetour.helper
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.core.content.FileProvider
+import com.jarnunes.udinetour.R
+import com.jarnunes.udinetour.commons.LogTag
 import com.jarnunes.udinetour.message.Message
 import java.io.File
 import java.io.FileInputStream
@@ -43,31 +46,35 @@ class FileHelper {
         } catch (e: InvalidClassException) {
             e.printStackTrace()
             return ArrayList()
-        } catch (e: Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
             return ArrayList()
         }
     }
 
     fun createImageURI(context: Context): Uri {
-        val imagesDir = File(context.filesDir, "images")
-        if (!imagesDir.exists()) {
-            imagesDir.mkdir()
-        }
+        createFileDir(context, "images")
 
-        val image = File(context.filesDir, "udine_tour_${System.currentTimeMillis()}.png")
+        val image = File(context.filesDir, "images/udine_tour_${System.currentTimeMillis()}.png")
         return FileProvider.getUriForFile(context, "com.jarnunes.udinetour.provider", image)
     }
 
-    fun createAudioURI(context: Context): Uri {
-        val audioDir = File(context.filesDir, "audios")
-        if (!audioDir.exists()) {
-            audioDir.mkdir()
-        }
-
-        val audioFile = File(context.filesDir, "udine_tour_audio_${System.currentTimeMillis()}.mp4")
-        return FileProvider.getUriForFile(context, "com.jarnunes.udinetour.provider", audioFile)
+    fun createAudioFile(context: Context): File {
+        createFileDir(context, "audios")
+        return File(context.filesDir, "audios/audio_${System.currentTimeMillis()}.mp4")
     }
+
+    private fun createFileDir(context: Context, directoryName: String){
+        val dir = File(context.filesDir, directoryName)
+        if (!dir.exists()) {
+            dir.mkdir()
+        }
+    }
+
+    fun createSampleAudioFile(context: Context): File {
+        return File(context.filesDir, "MUSICA.mp4")
+    }
+
 
     fun saveAudioToFile(context: Context, uri: Uri, audioData: ByteArray) {
         try {
@@ -84,4 +91,27 @@ class FileHelper {
             e.printStackTrace()
         }
     }
+
+    fun deleteFileByPath(context: Context, absolutePath: String): Boolean {
+        return try {
+            val file = File(absolutePath)
+            if (file.exists()) {
+                file.delete()
+                Log.i(
+                    LogTag.fileHelper(),
+                    context.getString(R.string.success_delete_file, absolutePath)
+                )
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            Log.e(
+                LogTag.fileHelper(),
+                context.getString(R.string.exception_delete_file, absolutePath, e.message)
+            )
+            false
+        }
+    }
+
 }

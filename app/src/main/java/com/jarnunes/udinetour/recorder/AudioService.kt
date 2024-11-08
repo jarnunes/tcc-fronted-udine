@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import com.jarnunes.udinetour.MainActivity
+import com.jarnunes.udinetour.helper.FileHelper
 import java.io.File
 
 class AudioService(private val mainActivity: MainActivity) {
@@ -17,7 +18,6 @@ class AudioService(private val mainActivity: MainActivity) {
     private val player by lazy {
         AndroidAudioPlayer(mainActivity.applicationContext)
     }
-
 
     fun record(
         afterStopRecordCallback: (File?) -> Unit,
@@ -33,14 +33,12 @@ class AudioService(private val mainActivity: MainActivity) {
             ActivityCompat.requestPermissions(mainActivity, arrayOf(recordPermission), 200)
         }
 
-
         // Start or stop recording
         if (recorder.isRecording()) {
             recorder.stop()
             audioFile?.let { afterStopRecordCallback(it) }
         } else {
-            // defines file path
-            audioFile = File(mainActivity.filesDir, "audio_${System.currentTimeMillis()}.mp4")
+            audioFile = FileHelper().createAudioFile(mainActivity)
 
             // start record
             recorder.start(audioFile!!)
