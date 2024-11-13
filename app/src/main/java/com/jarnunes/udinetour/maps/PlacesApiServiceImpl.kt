@@ -3,6 +3,7 @@ package com.jarnunes.udinetour.maps
 import android.util.Log
 import com.jarnunes.udinetour.MainActivity
 import com.jarnunes.udinetour.R
+import com.jarnunes.udinetour.commons.EnvReader
 import com.jarnunes.udinetour.maps.places.Place
 import com.jarnunes.udinetour.maps.places.PlaceDetailsResponse
 import com.jarnunes.udinetour.maps.places.PlaceDetailsResult
@@ -56,7 +57,7 @@ class PlacesApiServiceImpl(private var activity: MainActivity) {
             locationString,
             placesQuery.radius,
             placesQuery.type,
-            activity.getString(R.string.google_maps_api_key)
+            EnvReader.googlePlacesApiKey()
         )
 
         call.enqueue(object : Callback<PlacesResponse> {
@@ -96,7 +97,7 @@ class PlacesApiServiceImpl(private var activity: MainActivity) {
         val apiService = retrofit.create(PlacesApiDetailsService::class.java)
         val call = apiService.getPlaceDetails(
             placeId,
-            activity.getString(R.string.google_maps_api_key)
+            EnvReader.googlePlacesApiKey()
         )
 
         call.enqueue(object : Callback<PlaceDetailsResponse> {
