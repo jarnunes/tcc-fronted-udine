@@ -41,9 +41,8 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         configureMainView()
         configureListenerForSendMessages()
         configureListenerForAudioRecorder()
-        addWatcherToShowHideSendButton(binding.chatInputMessage, binding.chatSendMessageIcon)
+        //addWatcherToShowHideSendButton(binding.chatInputMessage, binding.chatSendMessageIcon)
     }
-
 
     @SuppressLint("NotifyDataSetChanged")
     private fun configureMessages() {

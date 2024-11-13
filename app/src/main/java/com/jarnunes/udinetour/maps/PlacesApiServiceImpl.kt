@@ -3,6 +3,9 @@ package com.jarnunes.udinetour.maps
 import android.util.Log
 import com.jarnunes.udinetour.MainActivity
 import com.jarnunes.udinetour.R
+import com.jarnunes.udinetour.maps.places.Place
+import com.jarnunes.udinetour.maps.places.PlaceDetailsResponse
+import com.jarnunes.udinetour.maps.places.PlaceDetailsResult
 import com.jarnunes.udinetour.message.UserLocation
 import retrofit2.Call
 import retrofit2.Callback
@@ -18,6 +21,23 @@ class PlacesApiServiceImpl(private var activity: MainActivity) {
             type = "tourist_attraction",
             radius = 1000
         )
+    }
+
+    fun getNearbyPlacesWithDetails(location: UserLocation,
+        callback: (ArrayList<Place>) -> Unit){
+        getNearbyPlaces(userLocation = location) { places ->
+            val detailsResults = ArrayList<Place>()
+
+            places.forEach { place ->
+                getPlaceDetails(place.place_id) { details ->
+                    details?.let { detailsResults.add(Place(it, place)) }
+                }
+            }
+
+            if (detailsResults.size == places.size) {
+                callback(detailsResults)
+            }
+        }
     }
 
     fun getNearbyPlaces(
@@ -63,6 +83,35 @@ class PlacesApiServiceImpl(private var activity: MainActivity) {
                 Log.e("API Error", "Failed to fetch places", t)
                 // empty list on error
                 callback(ArrayList())
+            }
+        })
+    }
+
+    fun getPlaceDetails(placeId: String, callback: (PlaceDetailsResult?) -> Unit) {
+        val retrofit = Retrofit.Builder()
+            .baseUrl(activity.getString(R.string.google_places_url))
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val apiService = retrofit.create(PlacesApiDetailsService::class.java)
+        val call = apiService.getPlaceDetails(
+            placeId,
+            activity.getString(R.string.google_maps_api_key)
+        )
+
+        call.enqueue(object : Callback<PlaceDetailsResponse> {
+            override fun onResponse(call: Call<PlaceDetailsResponse>, response: Response<PlaceDetailsResponse>) {
+                if (response.isSuccessful) {
+                    callback(response.body()?.results)
+                } else {
+                    Log.e("API Error", "Response unsuccessful: ${response.errorBody()?.string()}")
+                    callback(null)
+                }
+            }
+
+            override fun onFailure(call: Call<PlaceDetailsResponse>, t: Throwable) {
+                Log.e("API Error", "Failed to fetch place details", t)
+                callback(null)
             }
         })
     }

@@ -73,7 +73,7 @@ class MessageService(private val activity: MainActivity) : LocationServiceBase(a
         messageList.clear()
         messageList.addAll(storedMessageList)
         //todo: REMOVER
-        deleteAllMessages()
+        // deleteAllMessages()
 
         if (CollectionUtils.isEmpty(messageList)) {
             var createdMapMessage = false

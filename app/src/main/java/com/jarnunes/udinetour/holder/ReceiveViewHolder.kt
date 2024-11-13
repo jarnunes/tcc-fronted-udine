@@ -41,14 +41,4 @@ class ReceiveViewHolder(itemView: View, fragmentManager: FragmentManager) :
         // Customize o mapa conforme necessário, ex.: centralizar em uma localização
     }
 
-    private fun displayNearbyTouristSpots(userLatLng: LatLng) {
-        // Exemplificando como adicionar locais manualmente.
-        // Com a API de Lugares do Google, use a busca por locais próximos para obter pontos turísticos
-
-        val exampleTouristSpot = LatLng(userLatLng.latitude + 0.01, userLatLng.longitude + 0.01)
-        googleMap?.addMarker(MarkerOptions().position(exampleTouristSpot).title("Ponto Turístico Próximo"))
-
-        // Repetir para outros pontos ou utilizar resultados da API de Lugares
-
-    }
 }

@@ -5,6 +5,7 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -139,6 +140,13 @@ class MessageAdapter(
                 viewHolder.receiveAudioLayout.visibility = View.VISIBLE
                 viewHolder.receiveAudioDuration.visibility = View.VISIBLE
                 viewHolder.receiveAudioSeekBar.visibility = View.VISIBLE
+
+                setupAudioPlayer(
+                    viewHolder.receiveAudio,
+                    viewHolder.receiveAudioSeekBar,
+                    viewHolder.receiveAudioDuration,
+                    currentMessage.resourcePath!!
+                )
             }
 
             MessageType.MAP -> {
@@ -179,6 +187,11 @@ class MessageAdapter(
     }
 
     private fun addTouristsPointMarker(googleMap: GoogleMap, userLocation: UserLocation) {
+        PlacesApiServiceImpl(mainActivity).getNearbyPlacesWithDetails(userLocation) { placesDetails ->
+            placesDetails.forEach{ place ->
+                Log.i("PLACE", place.details.reviews?.get(0)?.text!!)
+            }
+        }
         PlacesApiServiceImpl(mainActivity).getNearbyPlaces(userLocation) { placesResult ->
             if (placesResult.isNotEmpty()) {
                 placesResult.forEach { place ->
@@ -192,7 +205,8 @@ class MessageAdapter(
                     marker?.showInfoWindow()
                 }
             } else {
-                //implementar registro de logs
+                //TODO: implementar registro de logs
+                //TODO: Implementar alerta para o usuário
             }
         }
     }
