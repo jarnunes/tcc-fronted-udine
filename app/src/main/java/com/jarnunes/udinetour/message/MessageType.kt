@@ -8,7 +8,9 @@ enum class MessageType : Serializable {
     IMAGE,
     AUDIO,
     MAP,
-    LOCATION;
+    LOCATION,
+    SYSTEM_WAIT,
+    SYSTEM_ALERT;
 
     fun isText(): Boolean {
         return this == TEXT

@@ -5,23 +5,21 @@ import com.google.android.gms.common.util.CollectionUtils
 import com.jarnunes.udinetour.MainActivity
 import com.jarnunes.udinetour.helper.DeviceHelper
 import com.jarnunes.udinetour.helper.FileHelper
+import com.jarnunes.udinetour.integrations.dto.Place
 import com.jarnunes.udinetour.maps.location.LocationServiceBase
 import java.io.File
+import java.time.LocalDateTime
 
 class MessageService(private val activity: MainActivity) : LocationServiceBase(activity) {
     private var messageList: ArrayList<Message> = ArrayList()
     private var fileHelper: FileHelper = FileHelper()
     private var deviceHelper: DeviceHelper = DeviceHelper()
 
-    fun createUserTextMessage(        message: String,
-        beforeCreateMessageCallback: (ArrayList<Message>) -> Unit
-    ) {
+    fun createUserTextMessage(message: String, beforeCreateMessageCallback: (ArrayList<Message>) -> Unit) {
         createTextMessage(message, SenderMessageType.USER, beforeCreateMessageCallback)
     }
 
-    fun createSystemTextMessage(
-        message: String, beforeCreateMessageCallback: (ArrayList<Message>) -> Unit
-    ) {
+    fun createSystemTextMessage(message: String, beforeCreateMessageCallback: (ArrayList<Message>) -> Unit) {
         createTextMessage(message, SenderMessageType.SYSTEM, beforeCreateMessageCallback)
     }
 
@@ -36,9 +34,12 @@ class MessageService(private val activity: MainActivity) : LocationServiceBase(a
         messageObject.sentId = getSentId(senderType)
         messageObject.setUserLocation(userLocation)
         messageList.add(messageObject)
-        fileHelper.writeMessages(messageList, activity.applicationContext)
-
+        writeMessages()
         beforeCreateMessageCallback(messageList)
+    }
+
+    private fun writeMessages(){
+        fileHelper.writeMessages(messageList, activity.applicationContext)
     }
 
     private fun getSentId(senderMessageType: SenderMessageType): String {
@@ -53,6 +54,22 @@ class MessageService(private val activity: MainActivity) : LocationServiceBase(a
         createAudioMessage(audioFile, SenderMessageType.USER)
     }
 
+    @SuppressLint("NewApi")
+    fun createSystemWaitMessage() {
+        val message = Message()
+        message.messageType = MessageType.SYSTEM_WAIT
+        message.sentId = getSentId(SenderMessageType.SYSTEM)
+        message.reference = LocalDateTime.now()
+        message.message = "Aguarde enquanto processamos sua requisição..."
+        messageList.add(message)
+        writeMessages()
+    }
+
+    fun removeSystemWaitMessage(){
+        messageList.removeIf { MessageType.SYSTEM_WAIT == it.messageType}
+        writeMessages()
+    }
+
     fun createSystemAudioMessage(userLocation: UserLocation, audioFile: File) {
         createAudioMessage(audioFile, SenderMessageType.SYSTEM)
     }
@@ -64,7 +81,7 @@ class MessageService(private val activity: MainActivity) : LocationServiceBase(a
         audioMessage.sentId = getSentId(senderType)
         audioMessage.messageType = MessageType.AUDIO
         messageList.add(audioMessage)
-        fileHelper.writeMessages(messageList, activity.applicationContext)
+        writeMessages()
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -73,34 +90,38 @@ class MessageService(private val activity: MainActivity) : LocationServiceBase(a
         messageList.clear()
         messageList.addAll(storedMessageList)
         //todo: REMOVER
-        // deleteAllMessages()
+         // deleteAllMessages()
 
-        if (CollectionUtils.isEmpty(messageList)) {
-            var createdMapMessage = false
-
-            locationService.getCurrentLocation {
-                this.userLocation = it
-
-                if (!createdMapMessage) {
-                    createMapMessage()
-                    //TODO: remover
-                    createSampleAudioMessage()
-
-                    this.activity.getMessageAdapter().notifyDataSetChanged()
-                    createdMapMessage = true
-                }
-            }
-        }
+//        if (CollectionUtils.isEmpty(messageList)) {
+//            var createdMapMessage = false
+//
+//            locationService.getCurrentLocation {
+//                this.userLocation = it
+//
+//                if (!createdMapMessage) {
+//                    //createMapMessage()
+//                    //TODO: remover
+//                    createSampleAudioMessage()
+//
+//                    this.activity.getMessageAdapter().notifyDataSetChanged()
+//                    createdMapMessage = true
+//                }
+//            }
+//        }
     }
 
     fun messageListCount(): Int {
         return messageList.size
     }
 
+    fun empty(): Boolean{
+        return messageList.isEmpty()
+    }
+
     fun deleteAllMessages() {
         deleteFileMessages()
         messageList.clear()
-        fileHelper.writeMessages(messageList, activity.applicationContext)
+        writeMessages()
     }
 
     private fun deleteFileMessages() {
@@ -115,28 +136,26 @@ class MessageService(private val activity: MainActivity) : LocationServiceBase(a
         return messageList
     }
 
-    fun createMapMessage() {
-        val mapMessage = Message()
-        mapMessage.messageType = MessageType.MAP
+    fun createMapMessage(places: ArrayList<Place>) {
+        messageList.removeIf{msg -> msg.messageType == MessageType.MAP}
+
+        val mapMessage = MapMessage()
+        mapMessage.places = places
         mapMessage.sentId = getSentId(SenderMessageType.SYSTEM)
         mapMessage.setUserLocation(userLocation)
         messageList.add(mapMessage)
-        fileHelper.writeMessages(messageList, activity.applicationContext)
+        writeMessages()
     }
 
-
-    fun createSampleAudioMessage() {
+    fun createAudioMessage(encodedAudioBase64: String) {
+        val audio = fileHelper.createAudioFile(activity, encodedAudioBase64)
         val message = Message()
-        message.messageType = MessageType.AUDIO
+        message.resourcePath = audio.absolutePath
         message.sentId = getSentId(SenderMessageType.SYSTEM)
+        message.messageType = MessageType.AUDIO
         message.setUserLocation(userLocation)
-        message.resourcePath = FileHelper().createSampleAudioFile(activity).absolutePath
-
         messageList.add(message)
-        fileHelper.writeMessages(messageList, activity.applicationContext)
+        writeMessages()
     }
 
-    fun getMapMessage(): Message {
-        return messageList.first { msg -> MessageType.MAP == msg.messageType }
-    }
 }

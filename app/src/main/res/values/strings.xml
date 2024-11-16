@@ -10,7 +10,7 @@
     <string name="txt_sent_audio_description">This is a sent audio</string>
 
     <!-- API -->
-    <string name="google_maps_api_key"/>
+    <string name="url_udine_aws_function">https://vws666knfdcfefeau2bsygcxc40tcpzb.lambda-url.us-east-2.on.aws</string>
     <string name="google_places_url">https://maps.googleapis.com/maps/api/place/</string>
 
     <!-- Strings used for fragments for navigation -->

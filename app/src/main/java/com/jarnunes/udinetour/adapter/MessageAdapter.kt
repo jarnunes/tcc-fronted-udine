@@ -5,7 +5,6 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,31 +15,24 @@ import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.GONE
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MapStyleOptions
-import com.google.android.gms.maps.model.MarkerOptions
 import com.jarnunes.udinetour.MainActivity
 import com.jarnunes.udinetour.R
 import com.jarnunes.udinetour.helper.DeviceHelper
 import com.jarnunes.udinetour.holder.ReceiveViewHolder
 import com.jarnunes.udinetour.holder.SentViewHolder
-import com.jarnunes.udinetour.maps.PlaceType
-import com.jarnunes.udinetour.maps.PlacesApiServiceImpl
+import com.jarnunes.udinetour.maps.MapService
+import com.jarnunes.udinetour.message.MapMessage
 import com.jarnunes.udinetour.message.Message
 import com.jarnunes.udinetour.message.MessageType
-import com.jarnunes.udinetour.message.UserLocation
 import com.jarnunes.udinetour.recorder.AndroidAudioPlayer
 
 class MessageAdapter(
     private val mainActivity: MainActivity,
     private val messageList: ArrayList<Message>,
     private val fragmentManager: FragmentManager
-) :
-    RecyclerView.Adapter<ViewHolder>() {
+) : RecyclerView.Adapter<ViewHolder>() {
 
+    private var mapService: MapService? = null
     private var deviceHelper = DeviceHelper()
     private val itemReceiveCode = 1
     private val itemSentCode = 2
@@ -118,8 +110,16 @@ class MessageAdapter(
                 )
             }
 
+            MessageType.SYSTEM_WAIT -> {}
+            MessageType.SYSTEM_ALERT -> {}
             MessageType.MAP -> {}
             MessageType.LOCATION -> {}
+        }
+    }
+
+    private fun initMapService(containerViewId: Int) {
+        if (mapService == null) {
+            mapService = MapService(containerViewId, mainActivity, fragmentManager)
         }
     }
 
@@ -127,7 +127,7 @@ class MessageAdapter(
         val viewHolder = holder as ReceiveViewHolder
 
         when (currentMessage.messageType) {
-            MessageType.TEXT -> {
+            MessageType.TEXT, MessageType.SYSTEM_WAIT -> {
                 viewHolder.receiveMessage.text = currentMessage.message
                 viewHolder.receiveMessage.visibility = View.VISIBLE
             }
@@ -150,67 +150,21 @@ class MessageAdapter(
             }
 
             MessageType.MAP -> {
+                initMapService(viewHolder.receiveMap.id)
                 viewHolder.receiveMessage.visibility = View.GONE
                 viewHolder.receiveAudio.visibility = View.GONE
                 viewHolder.receiveAudioLayout.visibility = View.GONE
                 viewHolder.receiveAudioDuration.visibility = View.GONE
                 viewHolder.receiveAudioSeekBar.visibility = View.GONE
                 viewHolder.receiveMap.visibility = View.VISIBLE
-
-                val userLocation = currentMessage.getUserLocation()
-                val mapFragment = SupportMapFragment.newInstance()
-                fragmentManager.beginTransaction()
-                    .replace(viewHolder.receiveMap.id, mapFragment)
-                    .commit()
-
-                mapFragment.getMapAsync { googleMap ->
-                    removeDefaultConfiguration(googleMap)
-                    addCurrentLocationPointMarker(googleMap, userLocation)
-                    addTouristsPointMarker(googleMap, userLocation)
-                }
+                mapService?.createMap(currentMessage as MapMessage)
             }
 
+            MessageType.SYSTEM_ALERT -> {}
             MessageType.IMAGE -> {}
             MessageType.LOCATION -> {}
         }
     }
-
-    private fun removeDefaultConfiguration(googleMap: GoogleMap) {
-        googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(mainActivity, R.raw.map_style))
-    }
-
-    private fun addCurrentLocationPointMarker(googleMap: GoogleMap, userLocation: UserLocation) {
-        val location = LatLng(userLocation.latitude!!, userLocation.longitude!!)
-        val title = mainActivity.getString(R.string.maps_current_location)
-        googleMap.addMarker(MarkerOptions().position(location).title(title))
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
-    }
-
-    private fun addTouristsPointMarker(googleMap: GoogleMap, userLocation: UserLocation) {
-        PlacesApiServiceImpl(mainActivity).getNearbyPlacesWithDetails(userLocation) { placesDetails ->
-            placesDetails.forEach{ place ->
-                Log.i("PLACE", place.details.reviews?.get(0)?.text!!)
-            }
-        }
-        PlacesApiServiceImpl(mainActivity).getNearbyPlaces(userLocation) { placesResult ->
-            if (placesResult.isNotEmpty()) {
-                placesResult.forEach { place ->
-                    val placeLoc = place.geometry.location
-                    val customIcon = PlaceType.bitmapDescriptorFactory(place.types)
-                    val loc = LatLng(placeLoc.lat, placeLoc.lng)
-                    val marker = googleMap.addMarker(
-                        MarkerOptions().position(loc).title(place.name).icon(customIcon)
-                    )
-
-                    marker?.showInfoWindow()
-                }
-            } else {
-                //TODO: implementar registro de logs
-                //TODO: Implementar alerta para o usuário
-            }
-        }
-    }
-
 
     @SuppressLint("SetTextI18n")
     private fun setupAudioPlayer(

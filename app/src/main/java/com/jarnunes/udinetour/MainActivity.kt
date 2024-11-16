@@ -17,8 +17,11 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.jarnunes.udinetour.adapter.MessageAdapter
+import com.jarnunes.udinetour.commons.ILog
 import com.jarnunes.udinetour.databinding.ActivityMainBinding
+import com.jarnunes.udinetour.integrations.IntegrationService
 import com.jarnunes.udinetour.maps.location.ActivityResultProvider
+import com.jarnunes.udinetour.maps.location.UserLocationService
 import com.jarnunes.udinetour.message.MessageService
 import com.jarnunes.udinetour.recorder.AudioService
 
@@ -28,7 +31,6 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
     private lateinit var binding: ActivityMainBinding
     private lateinit var audioService: AudioService
     private lateinit var messageService: MessageService
-    private var currentImagePath: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,18 +39,63 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         setContentView(binding.root)
         setSupportActionBar(binding.chatToolbar)
         initialize()
-        configureMessages()
+        configureInitMessages()
         configureMainView()
         configureListenerForSendMessages()
         configureListenerForAudioRecorder()
         //addWatcherToShowHideSendButton(binding.chatInputMessage, binding.chatSendMessageIcon)
     }
 
-    @SuppressLint("NotifyDataSetChanged")
-    private fun configureMessages() {
+    private fun configureInitMessages() {
+        var locationFetched = false
+        var descriptionFetched = false
+        val places = ArrayList<String>()
+
         this.messageAdapter =
             MessageAdapter(this, messageService.getAllMessages(), supportFragmentManager)
-        this.messageAdapter.notifyDataSetChanged()
+        notifyDataSetChanged()
+
+        if(messageService.empty()){
+            UserLocationService(this).getCurrentLocation { location ->
+
+                val integrationService = IntegrationService(this)
+
+                if(!locationFetched) {
+                    integrationService.getNearbyPlaces(location,
+                        onSuccess = { placesResponse ->
+                            locationFetched = true
+
+                            if (placesResponse != null) {
+                                messageService.createMapMessage(placesResponse.results)
+                                notifyDataSetChanged()
+
+                                placesResponse.results.map { it.name }.forEach { places.add(it) }
+                            }
+                        },
+                        onError = {
+
+                        })
+                }
+
+                if(locationFetched && !descriptionFetched){
+                    integrationService.generateAudioDescriptionFromPlacesName(places,
+                        onSuccess = { response ->
+                            descriptionFetched = true
+                            messageService.createAudioMessage(response?.audioContent!!)
+                            //notifyDataSetChanged()
+
+                            ILog.i(ILog.INTEGRATION_SERVICE, response.toString())
+                        },
+                        onError = { response ->
+                            ILog.e(ILog.INTEGRATION_SERVICE, "Erro ao obter a descrição dos locais")
+                        },
+                        onFailure = { throwable ->
+                            ILog.e(ILog.INTEGRATION_SERVICE, throwable)
+                        }
+                    )
+                }
+            }
+        }
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -57,10 +104,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
             audioService.record(
                 afterStopRecordCallback = { audioFile ->
                     binding.audioRecorder.setImageResource(R.drawable.baseline_mic_24)
-
-                    messageService.createUserAudioMessage(
-                        audioFile = audioFile!!
-                    )
+                    messageService.createUserAudioMessage(audioFile!!)
                     messageAdapter.notifyDataSetChanged()
                     binding.chatRecycler.scrollToPosition(messageService.messageListCount() - 1)
                 },
@@ -71,21 +115,37 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         }
     }
 
-    @SuppressLint("NotifyDataSetChanged")
     private fun configureListenerForSendMessages() {
-        // add the message to database
         binding.chatSendMessageIcon.setOnClickListener {
+            addSystemWaitProcess()
             val message = binding.chatInputMessage.text.toString()
 
             messageService.createUserTextMessage(message) { messages ->
-                //messageService.createSystemTextMessage("SYSTEM_MESSAGE") {}
-                currentImagePath = null
-                messageAdapter.notifyDataSetChanged()
-
+                notifyDataSetChanged()
                 binding.chatInputMessage.setText("")
                 binding.chatRecycler.scrollToPosition(messages.size - 1)
+                removeSystemWaitProcess()
             }
         }
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private fun notifyDataSetChanged(){
+        messageAdapter.notifyDataSetChanged()
+    }
+
+    private fun addSystemWaitProcess(){
+        messageService.createSystemWaitMessage()
+        binding.chatSendMessageIcon.isEnabled = false
+        binding.chatSendMessageIcon.setImageResource(R.drawable.baseline_send_24_disabled)
+        notifyDataSetChanged()
+    }
+
+    private fun removeSystemWaitProcess(){
+        messageService.removeSystemWaitMessage()
+        binding.chatSendMessageIcon.isEnabled = true
+        binding.chatSendMessageIcon.setImageResource(R.drawable.baseline_send_24)
+        notifyDataSetChanged()
     }
 
     private fun configureMainView() {
@@ -142,7 +202,8 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                     getString(R.string.dialog_confirmation_yes)
                 ) { _, _ ->
                     messageService.deleteAllMessages()
-                    messageService.createMapMessage()
+                    configureInitMessages()
+                    //messageService.createMapMessage()
                     messageAdapter.notifyDataSetChanged()
                 }
 

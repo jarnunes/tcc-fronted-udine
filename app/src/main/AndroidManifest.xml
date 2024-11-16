@@ -20,9 +20,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/ico"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@drawable/ico"
         android:supportsRtl="true"
         android:theme="@style/Theme.UdineTour"
         tools:targetApi="31">
@@ -38,7 +38,6 @@
             </intent-filter>
         </activity>
 
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.jarnunes.udinetour.provider"
@@ -52,7 +51,7 @@
         <!-- APIS -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="@string/google_maps_api_key" />
+            android:value="AIzaSyCo7p__AlBo7kVbvsXHNVY9TM0MaCWWkcY" />
     </application>
 
 

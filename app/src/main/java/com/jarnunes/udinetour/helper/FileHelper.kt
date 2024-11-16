@@ -2,10 +2,12 @@ package com.jarnunes.udinetour.helper
 
 import android.content.Context
 import android.net.Uri
+import android.util.Base64
 import android.util.Log
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import com.jarnunes.udinetour.R
-import com.jarnunes.udinetour.commons.LogTag
+import com.jarnunes.udinetour.commons.ILog
 import com.jarnunes.udinetour.message.Message
 import java.io.File
 import java.io.FileInputStream
@@ -75,6 +77,17 @@ class FileHelper {
         return File(context.filesDir, "MUSICA.mp4")
     }
 
+    fun createAudioFile(context: Context, base64String: String): File {
+        val byteArray = decodeBase64ToByteArray(base64String)
+        val file = createAudioFile(context)
+        saveAudioToFile(context, file.toUri(), byteArray)
+
+        return file
+    }
+
+    private fun decodeBase64ToByteArray(base64String: String): ByteArray {
+        return Base64.decode(base64String, Base64.DEFAULT)
+    }
 
     fun saveAudioToFile(context: Context, uri: Uri, audioData: ByteArray) {
         try {
@@ -98,7 +111,7 @@ class FileHelper {
             if (file.exists()) {
                 file.delete()
                 Log.i(
-                    LogTag.fileHelper(),
+                    ILog.fileHelper(),
                     context.getString(R.string.success_delete_file, absolutePath)
                 )
                 true
@@ -107,7 +120,7 @@ class FileHelper {
             }
         } catch (e: Exception) {
             Log.e(
-                LogTag.fileHelper(),
+                ILog.fileHelper(),
                 context.getString(R.string.exception_delete_file, absolutePath, e.message)
             )
             false

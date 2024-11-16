@@ -3,7 +3,7 @@ package com.jarnunes.udinetour.message
 import java.io.Serializable
 import java.time.LocalDateTime
 
-class Message : Serializable {
+open class Message : Serializable {
     var reference: LocalDateTime? = null
     var message: String? = null
     var sentId: String? = null
@@ -11,7 +11,7 @@ class Message : Serializable {
     var resourcePath: String? = null
     private lateinit var userLocation: UserLocation
 
-    constructor() {}
+    constructor()
 
     constructor(messageIn: String?, senderIdIn: String?, resourcePathIn: String?) {
         this.message = messageIn

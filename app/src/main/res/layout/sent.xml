@@ -15,11 +15,12 @@
             android:id="@+id/txt_sent_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:enabled="true"
             android:padding="10dp"
             android:text="@string/txt_sent_message_description"
             android:textColor="@color/white"
             android:textSize="18sp"
-            android:visibility="gone"/>
+            android:visibility="gone" />
 
         <ImageView
             android:id="@+id/img_sent_message"
@@ -48,16 +49,16 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:max="100"
-                android:progress="0"
-                android:padding="8dp"/>
+                android:padding="8dp"
+                android:progress="0" />
 
             <TextView
                 android:id="@+id/audioDuration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0:00"
                 android:paddingStart="8dp"
-                android:paddingEnd="8dp"/>
+                android:paddingEnd="8dp"
+                android:text="0:00" />
         </LinearLayout>
     </RelativeLayout>
 
