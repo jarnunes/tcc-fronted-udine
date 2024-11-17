@@ -111,7 +111,7 @@ class MessageAdapter(
             }
 
             MessageType.SYSTEM_WAIT -> {}
-            MessageType.SYSTEM_ALERT -> {}
+            MessageType.SYSTEM_WAIT_START -> {}
             MessageType.MAP -> {}
             MessageType.LOCATION -> {}
         }
@@ -127,7 +127,7 @@ class MessageAdapter(
         val viewHolder = holder as ReceiveViewHolder
 
         when (currentMessage.messageType) {
-            MessageType.TEXT, MessageType.SYSTEM_WAIT -> {
+            MessageType.TEXT, MessageType.SYSTEM_WAIT,  MessageType.SYSTEM_WAIT_START -> {
                 viewHolder.receiveMessage.text = currentMessage.message
                 viewHolder.receiveMessage.visibility = View.VISIBLE
             }
@@ -160,7 +160,6 @@ class MessageAdapter(
                 mapService?.createMap(currentMessage as MapMessage)
             }
 
-            MessageType.SYSTEM_ALERT -> {}
             MessageType.IMAGE -> {}
             MessageType.LOCATION -> {}
         }

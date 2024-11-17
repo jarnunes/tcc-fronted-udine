@@ -10,7 +10,7 @@ enum class MessageType : Serializable {
     MAP,
     LOCATION,
     SYSTEM_WAIT,
-    SYSTEM_ALERT;
+    SYSTEM_WAIT_START;
 
     fun isText(): Boolean {
         return this == TEXT

@@ -24,10 +24,12 @@ class UserLocationService(private val activityResultProvider: ActivityResultProv
 
     fun getCurrentLocation(callback: (UserLocation) -> Unit) {
         getUserLocation { lastLocation ->
-            val userLocation = UserLocation()
-            userLocation.latitude = -19.918892780804857
-            userLocation.longitude = -43.93867202055777
-            callback(userLocation)
+            if (lastLocation != null) {
+                val userLocation = UserLocation()
+                userLocation.latitude = lastLocation.latitude
+                userLocation.longitude = lastLocation.longitude
+                callback(userLocation)
+            }
             println(lastLocation)
         }
     }

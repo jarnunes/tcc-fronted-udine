@@ -27,8 +27,10 @@
     <!-- Dialogs -->
     <string name="dialog_delete_title">Excluir</string>
     <string name="dialog_delete_message">Confirmar exclusão de mensagens?</string>
+    <string name="dialog_confirmation_ok">OK</string>
     <string name="dialog_confirmation_yes">Sim</string>
     <string name="dialog_confirmation_no">Não</string>
+    <string name="dialog_error_title">Erro</string>
 
     <!-- Info -->
     <string name="success_delete_file">Arquivo %s removido com sucesso</string>

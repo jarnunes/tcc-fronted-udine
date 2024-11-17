@@ -1,7 +1,6 @@
 package com.jarnunes.udinetour.message
 
 import android.annotation.SuppressLint
-import com.google.android.gms.common.util.CollectionUtils
 import com.jarnunes.udinetour.MainActivity
 import com.jarnunes.udinetour.helper.DeviceHelper
 import com.jarnunes.udinetour.helper.FileHelper
@@ -55,18 +54,18 @@ class MessageService(private val activity: MainActivity) : LocationServiceBase(a
     }
 
     @SuppressLint("NewApi")
-    fun createSystemWaitMessage() {
+    fun createSystemWaitStartMessage() {
         val message = Message()
-        message.messageType = MessageType.SYSTEM_WAIT
+        message.messageType = MessageType.SYSTEM_WAIT_START
         message.sentId = getSentId(SenderMessageType.SYSTEM)
         message.reference = LocalDateTime.now()
-        message.message = "Aguarde enquanto processamos sua requisição..."
+        message.message = "Aguarde enquanto buscamos informações dos locais próximos..."
         messageList.add(message)
         writeMessages()
     }
 
     fun removeSystemWaitMessage(){
-        messageList.removeIf { MessageType.SYSTEM_WAIT == it.messageType}
+        messageList.removeIf { MessageType.SYSTEM_WAIT_START == it.messageType}
         writeMessages()
     }
 

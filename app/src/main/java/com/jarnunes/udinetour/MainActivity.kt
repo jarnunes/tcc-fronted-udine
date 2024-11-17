@@ -3,13 +3,10 @@ package com.jarnunes.udinetour
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
-import android.widget.EditText
-import android.widget.ImageView
+import android.widget.TextView
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
@@ -17,6 +14,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.jarnunes.udinetour.adapter.MessageAdapter
+import com.jarnunes.udinetour.commons.ExceptionUtils
 import com.jarnunes.udinetour.commons.ILog
 import com.jarnunes.udinetour.databinding.ActivityMainBinding
 import com.jarnunes.udinetour.integrations.IntegrationService
@@ -31,6 +29,8 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
     private lateinit var binding: ActivityMainBinding
     private lateinit var audioService: AudioService
     private lateinit var messageService: MessageService
+    private lateinit var locationService: UserLocationService
+    private lateinit var integrationService: IntegrationService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +39,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         setContentView(binding.root)
         setSupportActionBar(binding.chatToolbar)
         initialize()
+        configureMessageAdapter()
         configureInitMessages()
         configureMainView()
         configureListenerForSendMessages()
@@ -46,20 +47,20 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         //addWatcherToShowHideSendButton(binding.chatInputMessage, binding.chatSendMessageIcon)
     }
 
+    private fun configureMessageAdapter(){
+        this.messageAdapter =
+            MessageAdapter(this, messageService.getAllMessages(), supportFragmentManager)
+        notifyDataSetChanged()
+    }
+
     private fun configureInitMessages() {
         var locationFetched = false
         var descriptionFetched = false
         val places = ArrayList<String>()
 
-        this.messageAdapter =
-            MessageAdapter(this, messageService.getAllMessages(), supportFragmentManager)
-        notifyDataSetChanged()
-
         if(messageService.empty()){
-            UserLocationService(this).getCurrentLocation { location ->
-
-                val integrationService = IntegrationService(this)
-
+            addSystemWaitProcess()
+            locationService.getCurrentLocation { location ->
                 if(!locationFetched) {
                     integrationService.getNearbyPlaces(location,
                         onSuccess = { placesResponse ->
@@ -68,13 +69,11 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                             if (placesResponse != null) {
                                 messageService.createMapMessage(placesResponse.results)
                                 notifyDataSetChanged()
-
                                 placesResponse.results.map { it.name }.forEach { places.add(it) }
                             }
                         },
-                        onError = {
-
-                        })
+                        onError = {}
+                    )
                 }
 
                 if(locationFetched && !descriptionFetched){
@@ -82,8 +81,8 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                         onSuccess = { response ->
                             descriptionFetched = true
                             messageService.createAudioMessage(response?.audioContent!!)
-                            //notifyDataSetChanged()
-
+                            notifyDataSetChanged()
+                            removeSystemWaitProcess()
                             ILog.i(ILog.INTEGRATION_SERVICE, response.toString())
                         },
                         onError = { response ->
@@ -117,14 +116,16 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
 
     private fun configureListenerForSendMessages() {
         binding.chatSendMessageIcon.setOnClickListener {
-            addSystemWaitProcess()
-            val message = binding.chatInputMessage.text.toString()
+            executeOnTryCatch("configureListenerForSendMessages") {
+                addSystemWaitProcess()
+                val message = binding.chatInputMessage.text.toString()
 
-            messageService.createUserTextMessage(message) { messages ->
-                notifyDataSetChanged()
-                binding.chatInputMessage.setText("")
-                binding.chatRecycler.scrollToPosition(messages.size - 1)
-                removeSystemWaitProcess()
+                messageService.createUserTextMessage(message) { messages ->
+                    notifyDataSetChanged()
+                    binding.chatInputMessage.setText("")
+                    binding.chatRecycler.scrollToPosition(messages.size - 1)
+                    removeSystemWaitProcess()
+                }
             }
         }
     }
@@ -135,16 +136,16 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
     }
 
     private fun addSystemWaitProcess(){
-        messageService.createSystemWaitMessage()
+        messageService.createSystemWaitStartMessage()
+        binding.chatSendMessageIcon.setImageResource(R.drawable.baseline_disabled_send_24)
         binding.chatSendMessageIcon.isEnabled = false
-        binding.chatSendMessageIcon.setImageResource(R.drawable.baseline_send_24_disabled)
         notifyDataSetChanged()
     }
 
     private fun removeSystemWaitProcess(){
         messageService.removeSystemWaitMessage()
-        binding.chatSendMessageIcon.isEnabled = true
         binding.chatSendMessageIcon.setImageResource(R.drawable.baseline_send_24)
+        binding.chatSendMessageIcon.isEnabled = true
         notifyDataSetChanged()
     }
 
@@ -160,23 +161,10 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
     private fun initialize() {
         this.audioService = AudioService(this)
         this.messageService = MessageService(this)
+        this.locationService = UserLocationService(this)
+        this.integrationService = IntegrationService(this)
+
         this.messageService.loadMessages()
-    }
-
-    private fun addWatcherToShowHideSendButton(messageText: EditText, sendButton: ImageView) {
-        messageText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (s.isNullOrBlank()) {
-                    sendButton.visibility = View.GONE
-                } else {
-                    sendButton.visibility = View.VISIBLE
-                }
-            }
-
-            override fun afterTextChanged(s: Editable?) {}
-        })
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -201,10 +189,12 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                 alert.setPositiveButton(
                     getString(R.string.dialog_confirmation_yes)
                 ) { _, _ ->
-                    messageService.deleteAllMessages()
-                    configureInitMessages()
-                    //messageService.createMapMessage()
-                    messageAdapter.notifyDataSetChanged()
+
+                    executeOnTryCatch("onOptionsItemSelected") {
+                        messageService.deleteAllMessages()
+                        configureInitMessages()
+                        messageAdapter.notifyDataSetChanged()
+                    }
                 }
 
                 alert.create().show()
@@ -213,6 +203,36 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
 
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun executeOnTryCatch(serviceName: String, callback: () -> Unit) {
+        try {
+            callback()
+        } catch (exception: Exception) {
+            Log.e("ExecuteOnTryCatch-$serviceName", exception.message.toString())
+            showErrorDialog(serviceName, exception)
+        }
+    }
+
+    private fun showErrorDialog(serviceName: String, exception: java.lang.Exception) {
+        val rootCause = ExceptionUtils.getRootCause(exception)
+        val exceptionMessage = StringBuilder()
+        exceptionMessage.append("Ocorreu um erro na execução do serviço: ").append(serviceName)
+        exceptionMessage.append("\n\n")
+        exceptionMessage.append("Detalhes: ").append("\n").append(rootCause)
+
+        val errorTextView = TextView(this)
+        errorTextView.text = exceptionMessage
+        errorTextView.setPadding(50, 50, 50, 50)
+        errorTextView.movementMethod = android.text.method.ScrollingMovementMethod()
+        errorTextView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16f)
+
+        val alertDialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.dialog_error_title))
+            .setView(errorTextView)
+            .setPositiveButton(getString(R.string.dialog_confirmation_ok)) { dialog, _ -> dialog.dismiss() }
+            .create()
+        alertDialog.show()
     }
 
     override fun <I, O> getActivityResultLauncher(
