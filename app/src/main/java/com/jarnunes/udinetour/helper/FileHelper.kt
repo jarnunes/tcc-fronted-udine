@@ -73,10 +73,6 @@ class FileHelper {
         }
     }
 
-    fun createSampleAudioFile(context: Context): File {
-        return File(context.filesDir, "MUSICA.mp4")
-    }
-
     fun createAudioFile(context: Context, base64String: String): File {
         val byteArray = decodeBase64ToByteArray(base64String)
         val file = createAudioFile(context)
@@ -87,6 +83,10 @@ class FileHelper {
 
     private fun decodeBase64ToByteArray(base64String: String): ByteArray {
         return Base64.decode(base64String, Base64.DEFAULT)
+    }
+
+    fun encodeFileToBase64(audio: File): String {
+        return Base64.encodeToString(audio.readBytes(), Base64.DEFAULT)
     }
 
     fun saveAudioToFile(context: Context, uri: Uri, audioData: ByteArray) {

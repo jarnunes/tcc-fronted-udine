@@ -32,14 +32,13 @@ class MessageAdapter(
     private val fragmentManager: FragmentManager
 ) : RecyclerView.Adapter<ViewHolder>() {
 
+
     private var mapService: MapService? = null
     private var deviceHelper = DeviceHelper()
     private val itemReceiveCode = 1
     private val itemSentCode = 2
-
-    private val player by lazy {
-        AndroidAudioPlayer(mainActivity)
-    }
+    private var currentMediaPlayer: MediaPlayer? = null
+    private var currentPlayButton: ImageView? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         if (viewType == 1) {
@@ -180,7 +179,6 @@ class MessageAdapter(
 
             // Listener de erro para capturar falhas
             mediaPlayer.setOnErrorListener { _, what, extra ->
-                // Log e tratamento de erro
                 println("MediaPlayer error: what = $what, extra = $extra")
                 return@setOnErrorListener true
             }
@@ -192,7 +190,17 @@ class MessageAdapter(
 
                 seekBar.max = mediaPlayer.duration
 
+                // Manipulando o botão de play/pause
                 playButton.setOnClickListener {
+                    if (currentMediaPlayer?.audioSessionId != mediaPlayer.audioSessionId
+                        && currentMediaPlayer?.isPlaying == true) {
+                        currentMediaPlayer?.pause()
+                        currentPlayButton?.setImageResource(R.drawable.round_play_arrow_24)
+                    }
+
+                    currentMediaPlayer = mediaPlayer
+                    currentPlayButton = playButton
+
                     if (mediaPlayer.isPlaying) {
                         mediaPlayer.pause()
                         playButton.setImageResource(R.drawable.round_play_arrow_24)
@@ -213,11 +221,7 @@ class MessageAdapter(
                 })
 
                 seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                    override fun onProgressChanged(
-                        seekBar: SeekBar?,
-                        progress: Int,
-                        fromUser: Boolean
-                    ) {
+                    override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                         if (fromUser) {
                             mediaPlayer.seekTo(progress)
                         }
@@ -228,17 +232,13 @@ class MessageAdapter(
                 })
             }
 
-            mediaPlayer.setOnCompletionListener {
-                playButton.setImageResource(R.drawable.round_play_arrow_24)
-            }
-
         } catch (e: Exception) {
-            // Tratamento de erro ao configurar o MediaPlayer
             e.printStackTrace()
         }
 
         mediaPlayer.setOnCompletionListener {
             playButton.setImageResource(R.drawable.round_play_arrow_24)
+            currentMediaPlayer = null
         }
     }
 

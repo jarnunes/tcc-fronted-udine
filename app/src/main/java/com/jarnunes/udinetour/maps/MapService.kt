@@ -32,6 +32,10 @@ class MapService(
 
     private fun removeDefaultConfiguration(googleMap: GoogleMap) {
         googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(mainActivity, R.raw.map_style))
+        googleMap.uiSettings.isZoomControlsEnabled = true // Adicionar controles de zoom
+        googleMap.uiSettings.isScrollGesturesEnabled = true // Permitir gestos de rolagem
+        googleMap.uiSettings.isTiltGesturesEnabled = true // Permitir gestos de inclinação
+        googleMap.uiSettings.isRotateGesturesEnabled = true // Permitir gestos de rotação
     }
 
     private fun addCurrentLocationPointMarker(googleMap: GoogleMap, message: MapMessage) {

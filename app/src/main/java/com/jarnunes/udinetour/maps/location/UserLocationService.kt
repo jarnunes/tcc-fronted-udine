@@ -3,9 +3,9 @@ package com.jarnunes.udinetour.maps.location
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Looper
 import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -17,51 +17,72 @@ import com.google.android.gms.location.Priority
 import com.jarnunes.udinetour.message.UserLocation
 import java.util.concurrent.TimeUnit
 
-class UserLocationService(private val activityResultProvider: ActivityResultProvider)  {
+object UserLocationService {
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var activityResultProvider: ActivityResultProvider
+    private var isInitialized = false
+    private var locationPermissionRequest: ActivityResultLauncher<Array<String>>? = null
+    var lastUserLocation: UserLocation? = null
 
-    private var fusedLocationClient: FusedLocationProviderClient =
-        LocationServices.getFusedLocationProviderClient(activityResultProvider.getAppContext())
+    fun initialize(activityResultProvider: ActivityResultProvider) {
+        if (!isInitialized) {
+            this.activityResultProvider = activityResultProvider
+            this.fusedLocationClient =
+                LocationServices.getFusedLocationProviderClient(activityResultProvider.getAppContext())
 
-    fun getCurrentLocation(callback: (UserLocation) -> Unit) {
-        getUserLocation { lastLocation ->
-            if (lastLocation != null) {
-                val userLocation = UserLocation()
-                userLocation.latitude = lastLocation.latitude
-                userLocation.longitude = lastLocation.longitude
-                callback(userLocation)
-            }
-            println(lastLocation)
+            // Criar e configurar a solicitação de permissões apenas uma vez
+            locationPermissionRequest = activityResultProvider.getActivityResultLauncher(
+                ActivityResultContracts.RequestMultiplePermissions(),
+                ActivityResultCallback { permissions ->
+                    if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                        permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+                    ) {
+                        // Permissões concedidas, podemos pegar a localização
+                    }
+                }
+            )
+
+            isInitialized = true // Marca o serviço como inicializado
         }
     }
 
-    fun getUserLocation(callback: (Location?) -> Unit) {
-        val locationPermissionRequest = activityResultProvider.getActivityResultLauncher(
-            ActivityResultContracts.RequestMultiplePermissions(),
-            ActivityResultCallback { permissions ->
-                if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-                    permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-                ) {
-                    getLocation(callback)
-                }
-            }
-        )
+    fun getCurrentLocation(callback: (UserLocation) -> Unit) {
+        if (!isInitialized) {
+            throw IllegalStateException("UserLocationService must be initialized before use.")
+        }
 
-        locationPermissionRequest.launch(
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-        )
+        getUserLocation(callback)
     }
 
-    @SuppressLint("MissingPermission")
-    private fun getLocation(callback: (Location?) -> Unit) {
+    // Função para solicitar permissões se necessário
+    private fun getUserLocation(callback: (UserLocation) -> Unit) {
+        // Verifica se as permissões já foram concedidas
+        val locationPermissionsGranted = hasPermission(Manifest.permission.ACCESS_FINE_LOCATION) &&
+                hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
 
+        if (locationPermissionsGranted) {
+            // Se as permissões foram concedidas, obtemos a localização
+            getLocation(callback)
+        } else {
+            // Caso contrário, solicita permissões
+            locationPermissionRequest?.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
+
+    // Função para obter a localização a partir do FusedLocationClient
+    @SuppressLint("MissingPermission")
+    private fun getLocation(callback: (UserLocation) -> Unit) {
         if (hasPermission(Manifest.permission.ACCESS_FINE_LOCATION) &&
             hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
         ) {
             fusedLocationClient.requestLocationUpdates(
                 createLocationRequest(),
-                createLocationCallback(callback),
+                createLocationCallback(callback), // Passando o callback aqui
                 Looper.getMainLooper() // Para executar o callback na thread principal
             )
         }
@@ -78,19 +99,21 @@ class UserLocationService(private val activityResultProvider: ActivityResultProv
         return LocationRequest
             .Builder(TimeUnit.SECONDS.toMillis(30))
             .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-            .setMinUpdateIntervalMillis(TimeUnit.SECONDS.toMillis(5)).build()
+            .setMinUpdateIntervalMillis(TimeUnit.SECONDS.toMillis(5))
+            .build()
     }
 
-    private fun createLocationCallback(callback: (Location?) -> Unit): LocationCallback {
-        val locationCallback = object : LocationCallback() {
+    private fun createLocationCallback(callback: (UserLocation) -> Unit): LocationCallback {
+        return object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 val lastLocation = locationResult.lastLocation
-                if (lastLocation != null) {
-                    callback(lastLocation)
+                val userLocation = UserLocation().apply {
+                    latitude = lastLocation?.latitude ?: -19.918892780804857
+                    longitude = lastLocation?.longitude ?: -43.93867202055777
                 }
+                lastUserLocation = userLocation
+                callback(userLocation)
             }
         }
-        return locationCallback;
     }
-
 }

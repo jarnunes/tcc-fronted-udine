@@ -31,9 +31,12 @@
     <string name="dialog_confirmation_yes">Sim</string>
     <string name="dialog_confirmation_no">Não</string>
     <string name="dialog_error_title">Erro</string>
+    <string name="dialog_info_title">Informação</string>
 
     <!-- Info -->
     <string name="success_delete_file">Arquivo %s removido com sucesso</string>
+    <string name="system_msg_search_nearby_places">Aguarde! Buscando locais próximos…</string>
+    <string name="system_msg_process_text_message">Aguarde! Processando sua requisição…</string>
 
     <!-- Exceptions -->
     <string name="exception_delete_file">Ocorreu um erro ao deletar o arquivo %s. Detalhes: %s</string>

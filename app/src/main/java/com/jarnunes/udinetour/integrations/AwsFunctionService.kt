@@ -2,6 +2,8 @@ package com.jarnunes.udinetour.integrations
 
 import com.jarnunes.udinetour.integrations.dto.NearbyPlacesRequest
 import com.jarnunes.udinetour.integrations.dto.PlacesResponse
+import com.jarnunes.udinetour.integrations.dto.QuestionRequest
+import com.jarnunes.udinetour.integrations.dto.QuestionResponse
 import com.jarnunes.udinetour.integrations.dto.SynthesizeTextResponse
 import com.jarnunes.udinetour.integrations.dto.TextToSpeechResponse
 import retrofit2.Call
@@ -34,4 +36,9 @@ interface AwsFunctionService {
     @POST("/")
     @Headers("spring.cloud.function.definition: generateAudioDescriptionFromPlacesName")
     fun generateAudioDescriptionFromPlacesName(@Body request: List<String>): Call<TextToSpeechResponse>
+
+    @POST("/")
+    @Headers("spring.cloud.function.definition: answerQuestion")
+    fun answerQuestion(@Body request: QuestionRequest): Call<QuestionResponse>
+
 }

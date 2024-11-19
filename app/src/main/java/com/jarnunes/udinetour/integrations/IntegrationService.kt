@@ -6,23 +6,36 @@ import com.jarnunes.udinetour.R
 import com.jarnunes.udinetour.commons.ILog
 import com.jarnunes.udinetour.integrations.dto.NearbyPlacesRequest
 import com.jarnunes.udinetour.integrations.dto.PlacesResponse
+import com.jarnunes.udinetour.integrations.dto.QuestionRequest
+import com.jarnunes.udinetour.integrations.dto.QuestionResponse
 import com.jarnunes.udinetour.integrations.dto.SynthesizeTextResponse
 import com.jarnunes.udinetour.integrations.dto.TextToSpeechResponse
 import com.jarnunes.udinetour.message.UserLocation
+import okhttp3.OkHttpClient
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 
 class IntegrationService(val context: Context) {
 
     private fun createRetrofit(): Retrofit {
         return Retrofit.Builder()
+            .client(configureHTTPClient())
             .baseUrl(context.getString(R.string.url_udine_aws_function))
             .addConverterFactory(GsonConverterFactory.create())
             .build()
+    }
+
+    private fun configureHTTPClient(): OkHttpClient {
+        return OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .build();
     }
 
     /**
@@ -92,6 +105,12 @@ class IntegrationService(val context: Context) {
         onSuccess: (TextToSpeechResponse?) -> Unit, onError: (Response<TextToSpeechResponse>) -> Unit,
         onFailure: (Throwable) -> Unit) {
         invoke({ dd -> return@invoke dd.generateAudioDescriptionFromPlacesName(request) }, onSuccess, onError, onFailure)
+    }
+
+    fun answerQuestion(request: QuestionRequest,
+        onSuccess: (QuestionResponse?) -> Unit, onError: (Response<QuestionResponse>) -> Unit,
+        onFailure: (Throwable) -> Unit) {
+        invoke({ dd -> return@invoke dd.answerQuestion(request) }, onSuccess, onError, onFailure)
     }
 
 }
