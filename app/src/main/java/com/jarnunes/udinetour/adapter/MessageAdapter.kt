@@ -77,18 +77,18 @@ class MessageAdapter(
 
     private fun configureSentViewHolder(holder: ViewHolder, currentMessage: Message) {
         val viewHolder = holder as SentViewHolder
+        viewHolder.sentMessage.visibility = View.GONE
+        viewHolder.sentImage.visibility = View.GONE
+        viewHolder.sentAudioLayout.visibility = View.GONE
+
         when (currentMessage.messageType) {
             MessageType.IMAGE -> {
                 viewHolder.sentImage.visibility = View.VISIBLE
-                viewHolder.sentAudioLayout.visibility = View.GONE
-                viewHolder.sentMessage.visibility = View.GONE
                 viewHolder.sentImage.setImageURI(Uri.parse(currentMessage.resourcePath))
             }
 
             MessageType.TEXT -> {
                 viewHolder.sentMessage.visibility = View.VISIBLE
-                viewHolder.sentImage.visibility = View.GONE
-                viewHolder.sentAudioLayout.visibility = View.GONE
                 viewHolder.sentMessage.text = currentMessage.message
             }
 
@@ -97,8 +97,6 @@ class MessageAdapter(
                 viewHolder.sentAudio.visibility = View.VISIBLE
                 viewHolder.sentAudioSeekBar.visibility = View.VISIBLE
                 viewHolder.sentAudioDuration.visibility = View.VISIBLE
-                viewHolder.sentMessage.visibility = View.GONE
-                viewHolder.sentImage.visibility = View.GONE
 
                 // Configurar o layout de áudio
                 setupAudioPlayer(
@@ -109,10 +107,9 @@ class MessageAdapter(
                 )
             }
 
-            MessageType.SYSTEM_WAIT -> {}
-            MessageType.SYSTEM_WAIT_START -> {}
-            MessageType.MAP -> {}
-            MessageType.LOCATION -> {}
+            MessageType.SYSTEM_WAIT, MessageType.SYSTEM_WAIT_START, MessageType.MAP,
+            MessageType.LOCATION -> {
+            }
         }
     }
 
@@ -124,6 +121,12 @@ class MessageAdapter(
 
     private fun configureReceiveViewHolder(holder: ViewHolder, currentMessage: Message) {
         val viewHolder = holder as ReceiveViewHolder
+        viewHolder.receiveMessage.visibility = View.GONE
+        viewHolder.receiveAudio.visibility = View.GONE
+        viewHolder.receiveAudioLayout.visibility = View.GONE
+        viewHolder.receiveAudioDuration.visibility = View.GONE
+        viewHolder.receiveAudioSeekBar.visibility = View.GONE
+        viewHolder.receiveMap.visibility = GONE
 
         when (currentMessage.messageType) {
             MessageType.TEXT, MessageType.SYSTEM_WAIT,  MessageType.SYSTEM_WAIT_START -> {
@@ -132,9 +135,6 @@ class MessageAdapter(
             }
 
             MessageType.AUDIO -> {
-                viewHolder.receiveMessage.visibility = View.GONE
-                viewHolder.receiveMap.visibility = GONE
-
                 viewHolder.receiveAudio.visibility = View.VISIBLE
                 viewHolder.receiveAudioLayout.visibility = View.VISIBLE
                 viewHolder.receiveAudioDuration.visibility = View.VISIBLE
@@ -150,19 +150,15 @@ class MessageAdapter(
 
             MessageType.MAP -> {
                 initMapService(viewHolder.receiveMap.id)
-                viewHolder.receiveMessage.visibility = View.GONE
-                viewHolder.receiveAudio.visibility = View.GONE
-                viewHolder.receiveAudioLayout.visibility = View.GONE
-                viewHolder.receiveAudioDuration.visibility = View.GONE
-                viewHolder.receiveAudioSeekBar.visibility = View.GONE
                 viewHolder.receiveMap.visibility = View.VISIBLE
                 mapService?.createMap(currentMessage as MapMessage)
+
             }
 
-            MessageType.IMAGE -> {}
-            MessageType.LOCATION -> {}
+            MessageType.IMAGE, MessageType.LOCATION -> {}
         }
     }
+
 
     @SuppressLint("SetTextI18n")
     private fun setupAudioPlayer(

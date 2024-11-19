@@ -20,7 +20,8 @@ import com.jarnunes.udinetour.commons.ILog
 import com.jarnunes.udinetour.databinding.ActivityMainBinding
 import com.jarnunes.udinetour.helper.FileHelper
 import com.jarnunes.udinetour.integrations.IntegrationService
-import com.jarnunes.udinetour.integrations.dto.QuestionFormatType
+import com.jarnunes.udinetour.integrations.dto.QuestionFormatType.AUDIO
+import com.jarnunes.udinetour.integrations.dto.QuestionFormatType.TEXT
 import com.jarnunes.udinetour.integrations.dto.QuestionRequest
 import com.jarnunes.udinetour.maps.location.ActivityResultProvider
 import com.jarnunes.udinetour.maps.location.UserLocationService
@@ -47,7 +48,6 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         configureMainView()
         configureListenerForSendMessages()
         configureListenerForAudioRecorder()
-        //addWatcherToShowHideSendButton(binding.chatInputMessage, binding.chatSendMessageIcon)
     }
 
     private fun configureMessageAdapter() {
@@ -63,6 +63,8 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
 
         if (messageService.empty()) {
             addSystemWaitProcess(R.string.system_msg_search_nearby_places)
+            notifyDataSetChanged()
+
             UserLocationService.getCurrentLocation{ location ->
                 if (!locationFetched) {
                     integrationService.getNearbyPlaces(location,
@@ -71,36 +73,38 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
 
                             if (placesResponse != null) {
                                 messageService.createMapMessage(location, placesResponse.results)
+                                removeSystemWaitProcess()
                                 notifyDataSetChanged()
                                 placesResponse.results.map { it.name }.forEach { places.add(it) }
+
                             }
                         },
                         onError = {}
                     )
                 }
 
-                if (locationFetched && !descriptionFetched) {
-                    integrationService.generateAudioDescriptionFromPlacesName(places,
-                        onSuccess = { response ->
-                            descriptionFetched = true
-                            messageService.createAudioMessage(response?.audioContent!!)
-                            removeSystemWaitProcess()
-                            notifyDataSetChanged()
-                            ILog.i(ILog.INTEGRATION_SERVICE, response.toString())
-                        },
-                        onError = { response ->
-                            ILog.e(ILog.INTEGRATION_SERVICE, "Erro ao obter a descrição dos locais")
-                        },
-                        onFailure = { throwable ->
-                            showErrorDialog(
-                                "generateAudioDescriptionFromPlacesName.onFailure",
-                                throwable
-                            )
-                            removeSystemWaitProcess()
-                            ILog.e(ILog.INTEGRATION_SERVICE, throwable)
-                        }
-                    )
-                }
+//                if (locationFetched && !descriptionFetched) {
+//                    integrationService.generateAudioDescriptionFromPlacesName(places,
+//                        onSuccess = { response ->
+//                            descriptionFetched = true
+//                            messageService.createAudioMessage(response?.audioContent!!)
+//                            removeSystemWaitProcess()
+//                            notifyDataSetChanged()
+//                            ILog.i(ILog.INTEGRATION_SERVICE, response.toString())
+//                        },
+//                        onError = { response ->
+//                            ILog.e(ILog.INTEGRATION_SERVICE, "Erro ao obter a descrição dos locais")
+//                        },
+//                        onFailure = { throwable ->
+//                            showErrorDialog(
+//                                "generateAudioDescriptionFromPlacesName.onFailure",
+//                                throwable
+//                            )
+//                            removeSystemWaitProcess()
+//                            ILog.e(ILog.INTEGRATION_SERVICE, throwable)
+//                        }
+//                    )
+//                }
             }
         }
     }
@@ -115,7 +119,8 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                     addSystemWaitProcess(R.string.system_msg_process_text_message)
                     val locationsID = messageService.getMapMessageLocationsId()
                     val encodedAudio = FileHelper().encodeFileToBase64(audioFile)
-                    val request = QuestionRequest(encodedAudio, QuestionFormatType.AUDIO, locationsID)
+                    val byteArray = audioFile.readBytes()
+                    val request = QuestionRequest(encodedAudio, AUDIO, locationsID)
                     integrationService.answerQuestion(request,
                         onSuccess = {questionResponse ->
                             ILog.i(ILog.INTEGRATION_SERVICE, "Resposta do serviço de audio ")
@@ -151,12 +156,11 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                 val message = binding.chatInputMessage.text.toString()
 
                 if (message.isNotEmpty()) {
-                    addSystemWaitProcess(R.string.system_msg_process_text_message)
                     messageService.createUserTextMessage(message) {}
+                    addSystemWaitProcess(R.string.system_msg_process_text_message)
 
                     val locationsID = messageService.getMapMessageLocationsId()
-                    val questionRequest = QuestionRequest(message, QuestionFormatType.TEXT,
-                        locationsID)
+                    val questionRequest = QuestionRequest(message, TEXT, locationsID)
                     integrationService.answerQuestion(questionRequest,
                         onSuccess = {questionResponse ->
                             val response = questionResponse?.response
@@ -249,7 +253,6 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                         messageService.deleteAllMessages()
                         notifyDataSetChanged()
                         configureInitMessages()
-                        notifyDataSetChanged()
                     }
                 }
 
@@ -305,7 +308,4 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         return this.applicationContext
     }
 
-    override fun getMessageAdapter(): MessageAdapter {
-        return this.messageAdapter
-    }
 }

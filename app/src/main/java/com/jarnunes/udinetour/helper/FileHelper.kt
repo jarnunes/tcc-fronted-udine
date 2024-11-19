@@ -1,5 +1,6 @@
 package com.jarnunes.udinetour.helper
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.util.Base64
@@ -63,7 +64,7 @@ class FileHelper {
 
     fun createAudioFile(context: Context): File {
         createFileDir(context, "audios")
-        return File(context.filesDir, "audios/audio_${System.currentTimeMillis()}.mp4")
+        return File(context.filesDir, "audios/audio_${System.currentTimeMillis()}.mp3")
     }
 
     private fun createFileDir(context: Context, directoryName: String){
@@ -85,8 +86,10 @@ class FileHelper {
         return Base64.decode(base64String, Base64.DEFAULT)
     }
 
+    @SuppressLint("NewApi")
     fun encodeFileToBase64(audio: File): String {
-        return Base64.encodeToString(audio.readBytes(), Base64.DEFAULT)
+        return java.util.Base64.getEncoder().encodeToString(audio.readBytes())
+        //return Base64.encodeToString(audio.readBytes(), Base64.DEFAULT)
     }
 
     fun saveAudioToFile(context: Context, uri: Uri, audioData: ByteArray) {
