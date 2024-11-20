@@ -87,8 +87,16 @@ class MessageService(private val activity: MainActivity) {
     @SuppressLint("NotifyDataSetChanged")
     fun loadMessages() {
         val storedMessageList = fileHelper.readMessages(activity.applicationContext)
+        removeSystemMessages(storedMessageList)
         messageList.clear()
         messageList.addAll(storedMessageList)
+    }
+
+    private fun removeSystemMessages(storedMessageList: ArrayList<Message>) {
+        storedMessageList.removeIf {
+            it.messageType == MessageType.SYSTEM_WAIT_START
+                    || it.messageType == MessageType.SYSTEM_WAIT
+        }
     }
 
     fun messageListCount(): Int {

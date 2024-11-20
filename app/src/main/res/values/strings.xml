@@ -4,6 +4,7 @@
     <string name="action_clear_chat">Limpar Mensagens</string>
     <string name="permission_rationale">Location permission needed for core functionality</string>
     <string name="ok">OK</string>
+
     <!-- Chat Messages -->
     <string name="txt_sent_message_description">This is a sent message</string>
     <string name="txt_sent_image_description">This is a sent image</string>
@@ -11,6 +12,7 @@
 
     <!-- API -->
     <string name="url_udine_aws_function">https://vws666knfdcfefeau2bsygcxc40tcpzb.lambda-url.us-east-2.on.aws</string>
+    <!--    <string name="url_udine_aws_function">http://192.168.18.2:5000</string>-->
     <string name="google_places_url">https://maps.googleapis.com/maps/api/place/</string>
 
     <!-- Strings used for fragments for navigation -->
@@ -40,12 +42,9 @@
 
     <!-- Exceptions -->
     <string name="exception_delete_file">Ocorreu um erro ao deletar o arquivo %s. Detalhes: %s</string>
-
-
     <string name="first_fragment_label">First Fragment</string>
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
-
     <string name="descriptor_do_conteudo_imagem">Descriptor do conteudo imagem</string>
 </resources>

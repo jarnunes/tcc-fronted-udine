@@ -4,41 +4,23 @@ import com.jarnunes.udinetour.integrations.dto.NearbyPlacesRequest
 import com.jarnunes.udinetour.integrations.dto.PlacesResponse
 import com.jarnunes.udinetour.integrations.dto.QuestionRequest
 import com.jarnunes.udinetour.integrations.dto.QuestionResponse
-import com.jarnunes.udinetour.integrations.dto.SynthesizeTextResponse
 import com.jarnunes.udinetour.integrations.dto.TextToSpeechResponse
-import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.Headers
 import retrofit2.http.POST
 
 interface AwsFunctionService {
 
-    @POST("/")
+    @POST("/nearbyPlaces/")
     @Headers("spring.cloud.function.definition: nearbyPlaces")
-    fun getNearbyPlaces(@Body request: NearbyPlacesRequest): Call<PlacesResponse>
+    suspend fun getNearbyPlacesAsync(@Body request: NearbyPlacesRequest): PlacesResponse
 
-    @POST("/")
-    @Headers("spring.cloud.function.definition: describeLocation")
-    fun describeLocation(@Body request: String): Call<String>
+    @POST("/generateShortAudioDescriptionFromPlacesName/")
+    @Headers("spring.cloud.function.definition: generateShortAudioDescriptionFromPlacesName")
+    suspend fun generateAudioDescriptionFromPlacesNameAsync(@Body request: List<String>): TextToSpeechResponse
 
-    @POST("/")
-    @Headers("spring.cloud.function.definition: describeLocations")
-    fun describeLocations(@Body request: List<String>): Call<String>
-
-    @POST("/")
-    @Headers("spring.cloud.function.definition: textToSpeech")
-    fun synthesizeText(@Body request: String): Call<SynthesizeTextResponse>
-
-    @POST("/")
-    @Headers("spring.cloud.function.definition: speechToText")
-    fun recognize(@Body request: String): Call<String>
-
-    @POST("/")
-    @Headers("spring.cloud.function.definition: generateAudioDescriptionFromPlacesName")
-    fun generateAudioDescriptionFromPlacesName(@Body request: List<String>): Call<TextToSpeechResponse>
-
-    @POST("/")
+    @POST("/answerQuestion/")
     @Headers("spring.cloud.function.definition: answerQuestion")
-    fun answerQuestion(@Body request: QuestionRequest): Call<QuestionResponse>
+    suspend fun answerQuestionAsync(@Body request: QuestionRequest): QuestionResponse
 
 }

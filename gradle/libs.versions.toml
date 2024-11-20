@@ -17,6 +17,8 @@ navigationUiKtx = "2.8.1"
 playServicesAdsIdentifier = "18.1.0"
 playServicesLocation = "21.3.0"
 playServicesMaps = "19.0.0"
+#secretsGradlePlugin = "2.0.1"
+#places = "4.1.0"
 
 [libraries]
 androidx-concurrent-futures = { module = "androidx.concurrent:concurrent-futures", version.ref = "concurrentFutures" }
@@ -38,8 +40,8 @@ play-services-ads-identifier = { group = "com.google.android.gms", name = "play-
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMaps" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "converterGson" }
+#places = { group = "com.google.android.libraries.places", name = "places", version.ref = "places" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-

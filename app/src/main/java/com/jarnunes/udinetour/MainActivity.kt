@@ -24,9 +24,13 @@ import com.jarnunes.udinetour.integrations.dto.QuestionFormatType.AUDIO
 import com.jarnunes.udinetour.integrations.dto.QuestionFormatType.TEXT
 import com.jarnunes.udinetour.integrations.dto.QuestionRequest
 import com.jarnunes.udinetour.maps.location.ActivityResultProvider
+import com.jarnunes.udinetour.maps.location.CurrentLocationService
 import com.jarnunes.udinetour.maps.location.UserLocationService
 import com.jarnunes.udinetour.message.MessageService
 import com.jarnunes.udinetour.recorder.AudioService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), ActivityResultProvider {
 
@@ -57,54 +61,25 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
     }
 
     private fun configureInitMessages() {
-        var locationFetched = false
-        var descriptionFetched = false
-        val places = ArrayList<String>()
+        if(messageService.empty()) {
+            CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    addSystemWaitProcess(R.string.system_msg_search_nearby_places)
+                    val location = CurrentLocationService.getUserLocation()
 
-        if (messageService.empty()) {
-            addSystemWaitProcess(R.string.system_msg_search_nearby_places)
-            notifyDataSetChanged()
+                    val placesResponse = integrationService.getNearbyPlacesAsync(location)
+                    messageService.createMapMessage(location, placesResponse.results)
 
-            UserLocationService.getCurrentLocation{ location ->
-                if (!locationFetched) {
-                    integrationService.getNearbyPlaces(location,
-                        onSuccess = { placesResponse ->
-                            locationFetched = true
-
-                            if (placesResponse != null) {
-                                messageService.createMapMessage(location, placesResponse.results)
-                                removeSystemWaitProcess()
-                                notifyDataSetChanged()
-                                placesResponse.results.map { it.name }.forEach { places.add(it) }
-
-                            }
-                        },
-                        onError = {}
-                    )
+                    val locationsDescription = integrationService
+                        .generateAudioDescriptionFromPlacesNameAsync(placesResponse.results.map { it.name }
+                            .toList())
+                    messageService.createAudioMessage(locationsDescription.audioContent)
+                } catch (e: Exception) {
+                    showErrorDialog("Obter localização, locais próximos e gerar descrição.", e)
                 }
 
-//                if (locationFetched && !descriptionFetched) {
-//                    integrationService.generateAudioDescriptionFromPlacesName(places,
-//                        onSuccess = { response ->
-//                            descriptionFetched = true
-//                            messageService.createAudioMessage(response?.audioContent!!)
-//                            removeSystemWaitProcess()
-//                            notifyDataSetChanged()
-//                            ILog.i(ILog.INTEGRATION_SERVICE, response.toString())
-//                        },
-//                        onError = { response ->
-//                            ILog.e(ILog.INTEGRATION_SERVICE, "Erro ao obter a descrição dos locais")
-//                        },
-//                        onFailure = { throwable ->
-//                            showErrorDialog(
-//                                "generateAudioDescriptionFromPlacesName.onFailure",
-//                                throwable
-//                            )
-//                            removeSystemWaitProcess()
-//                            ILog.e(ILog.INTEGRATION_SERVICE, throwable)
-//                        }
-//                    )
-//                }
+                removeSystemWaitProcess()
+                notifyDataSetChanged()
             }
         }
     }
@@ -119,29 +94,20 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                     addSystemWaitProcess(R.string.system_msg_process_text_message)
                     val locationsID = messageService.getMapMessageLocationsId()
                     val encodedAudio = FileHelper().encodeFileToBase64(audioFile)
-                    val byteArray = audioFile.readBytes()
                     val request = QuestionRequest(encodedAudio, AUDIO, locationsID)
-                    integrationService.answerQuestion(request,
-                        onSuccess = {questionResponse ->
-                            ILog.i(ILog.INTEGRATION_SERVICE, "Resposta do serviço de audio ")
-                            val response = questionResponse?.response
-                            messageService.createAudioMessage(response!!)
-                            removeSystemWaitProcess()
-                            createDialog(R.string.dialog_info_title, "Resposta do serviço de audio com sucesso.")
-                        },
-                        onError = {questionResponse ->
-                            ILog.i(ILog.INTEGRATION_SERVICE, "Resposta do serviço de audio com erro ")
-                            removeSystemWaitProcess()
-                            createDialog(R.string.dialog_info_title, "Resposta do serviço de audio com erro. ${questionResponse.message()}")
-                        },
-                        onFailure = {exception ->
-                            ILog.i(ILog.INTEGRATION_SERVICE, "Resposta do serviço de audio com exceção ")
-                            showErrorDialog("configureListenerForSendMessages", exception)
-                            removeSystemWaitProcess()
-                        })
 
-                    notifyDataSetChanged()
-                    scrollToBottom()
+                    CoroutineScope(Dispatchers.Main).launch {
+                        try {
+                            val response = integrationService.answerQuestionAsync(request)
+                            messageService.createAudioMessage(response.response)
+                        } catch (e: Exception) {
+                            ILog.e(ILog.INTEGRATION_SERVICE, e)
+                            showErrorDialog("Responder pergunta via audio.", e)
+                        }
+                        removeSystemWaitProcess()
+                        notifyDataSetChanged()
+                        scrollToBottom()
+                    }
                 },
                 afterStartRecordCallback = {
                     binding.audioRecorder.setImageResource(R.drawable.sharp_mic_off_24)
@@ -152,35 +118,28 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
 
     private fun configureListenerForSendMessages() {
         binding.chatSendMessageIcon.setOnClickListener {
-            executeOnTryCatch("configureListenerForSendMessages") {
-                val message = binding.chatInputMessage.text.toString()
+            val message = binding.chatInputMessage.text.toString()
 
-                if (message.isNotEmpty()) {
-                    messageService.createUserTextMessage(message) {}
-                    addSystemWaitProcess(R.string.system_msg_process_text_message)
+            CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    if (message.isNotEmpty()) {
+                        messageService.createUserTextMessage(message) {}
+                        addSystemWaitProcess(R.string.system_msg_process_text_message)
 
-                    val locationsID = messageService.getMapMessageLocationsId()
-                    val questionRequest = QuestionRequest(message, TEXT, locationsID)
-                    integrationService.answerQuestion(questionRequest,
-                        onSuccess = {questionResponse ->
-                            val response = questionResponse?.response
-                            messageService.createSystemTextMessage(response!!){}
-                            removeSystemWaitProcess()
-                        },
-                        onError = {questionResponse ->
-
-                            removeSystemWaitProcess()
-                        },
-                        onFailure = {exception ->
-                            showErrorDialog("configureListenerForSendMessages", exception)
-                            removeSystemWaitProcess()
-                        })
-
-                    notifyDataSetChanged()
-                    binding.chatInputMessage.setText("")
-                    notifyDataSetChanged()
-                    scrollToBottom()
+                        val locationsID = messageService.getMapMessageLocationsId()
+                        val questionRequest = QuestionRequest(message, TEXT, locationsID)
+                        val answerResponse = integrationService.answerQuestionAsync(questionRequest)
+                        val response = answerResponse.response
+                        messageService.createSystemTextMessage(response){}
+                    }
+                } catch (e: Exception) {
+                    showErrorDialog("Responser pergunta de texto", e)
                 }
+
+                binding.chatInputMessage.setText("")
+                removeSystemWaitProcess()
+                notifyDataSetChanged()
+                scrollToBottom()
             }
         }
     }
@@ -218,6 +177,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
     }
 
     private fun initialize() {
+        CurrentLocationService.initialize(this)
         UserLocationService.initialize(this)
         this.audioService = AudioService(this)
         this.messageService = MessageService(this)
