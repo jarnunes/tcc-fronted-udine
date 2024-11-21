@@ -11,15 +11,15 @@ import retrofit2.http.POST
 
 interface AwsFunctionService {
 
-    @POST("/nearbyPlaces/")
+    @POST("/nearbyPlaces")
     @Headers("spring.cloud.function.definition: nearbyPlaces")
     suspend fun getNearbyPlacesAsync(@Body request: NearbyPlacesRequest): PlacesResponse
 
-    @POST("/generateShortAudioDescriptionFromPlacesName/")
+    @POST("/generateShortAudioDescriptionFromPlacesName")
     @Headers("spring.cloud.function.definition: generateShortAudioDescriptionFromPlacesName")
     suspend fun generateAudioDescriptionFromPlacesNameAsync(@Body request: List<String>): TextToSpeechResponse
 
-    @POST("/answerQuestion/")
+    @POST("/answerQuestion")
     @Headers("spring.cloud.function.definition: answerQuestion")
     suspend fun answerQuestionAsync(@Body request: QuestionRequest): QuestionResponse
 

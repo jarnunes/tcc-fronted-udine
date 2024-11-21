@@ -40,8 +40,8 @@ class MapService(
     }
 
     private fun addCurrentLocationPointMarker(googleMap: GoogleMap, message: MapMessage) {
-        val userLocation = message.getUserLocation()
-        val location = LatLng(userLocation.latitude!!, userLocation.longitude!!)
+        val userLocation = message.userLocation
+        val location = LatLng(userLocation?.latitude!!, userLocation.longitude!!)
         val title = mainActivity.getString(R.string.maps_current_location)
         googleMap.addMarker(MarkerOptions().position(location).title(title))
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))

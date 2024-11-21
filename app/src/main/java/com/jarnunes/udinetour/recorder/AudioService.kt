@@ -19,18 +19,15 @@ class AudioService(private val mainActivity: MainActivity) {
         AndroidAudioPlayer(mainActivity.applicationContext)
     }
 
-    fun record(
-        afterStopRecordCallback: (File?) -> Unit,
-        afterStartRecordCallback: () -> Unit
-    ) {
+    fun record(afterStopRecordCallback: (File?) -> Unit, afterStartRecordCallback: () -> Unit) {
         val recordPermission = Manifest.permission.RECORD_AUDIO
 
-        // request permission
         if (ActivityCompat.checkSelfPermission(
                 mainActivity.applicationContext, recordPermission
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(mainActivity, arrayOf(recordPermission), 200)
+            return
         }
 
         // Start or stop recording
@@ -39,13 +36,9 @@ class AudioService(private val mainActivity: MainActivity) {
             audioFile?.let { afterStopRecordCallback(it) }
         } else {
             audioFile = FileHelper().createAudioFile(mainActivity)
-
-            // start record
             recorder.start(audioFile!!)
-
             afterStartRecordCallback()
         }
-
     }
 
 

@@ -2,6 +2,7 @@ package com.jarnunes.udinetour
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -24,8 +25,7 @@ import com.jarnunes.udinetour.integrations.dto.QuestionFormatType.AUDIO
 import com.jarnunes.udinetour.integrations.dto.QuestionFormatType.TEXT
 import com.jarnunes.udinetour.integrations.dto.QuestionRequest
 import com.jarnunes.udinetour.maps.location.ActivityResultProvider
-import com.jarnunes.udinetour.maps.location.CurrentLocationService
-import com.jarnunes.udinetour.maps.location.UserLocationService
+import com.jarnunes.udinetour.maps.location.UserLocationService2
 import com.jarnunes.udinetour.message.MessageService
 import com.jarnunes.udinetour.recorder.AudioService
 import kotlinx.coroutines.CoroutineScope
@@ -65,22 +65,23 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
                     addSystemWaitProcess(R.string.system_msg_search_nearby_places)
-                    val location = CurrentLocationService.getUserLocation()
+                    val location = UserLocationService2.getUserLocation()
 
                     val placesResponse = integrationService.getNearbyPlacesAsync(location)
                     messageService.createMapMessage(location, placesResponse.results)
+                    notifyDataSetChanged()
 
                     val locationsDescription = integrationService
                         .generateAudioDescriptionFromPlacesNameAsync(placesResponse.results.map { it.name }
                             .toList())
                     messageService.createAudioMessage(locationsDescription.audioContent)
+                    notifyDataSetChanged()
                 } catch (e: Exception) {
                     showErrorDialog("Obter localização, locais próximos e gerar descrição.", e)
                 }
-
                 removeSystemWaitProcess()
-                notifyDataSetChanged()
             }
+            notifyDataSetChanged()
         }
     }
 
@@ -88,16 +89,17 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         binding.audioRecorder.setOnClickListener {
             audioService.record(
                 afterStopRecordCallback = { audioFile ->
-                    binding.audioRecorder.setImageResource(R.drawable.baseline_mic_24)
-                    messageService.createUserAudioMessage(audioFile!!)
-
-                    addSystemWaitProcess(R.string.system_msg_process_text_message)
-                    val locationsID = messageService.getMapMessageLocationsId()
-                    val encodedAudio = FileHelper().encodeFileToBase64(audioFile)
-                    val request = QuestionRequest(encodedAudio, AUDIO, locationsID)
-
                     CoroutineScope(Dispatchers.Main).launch {
                         try {
+                            val userLocation = UserLocationService2.getUserLocation()
+                            binding.audioRecorder.setImageResource(R.drawable.baseline_mic_24)
+                            messageService.createUserAudioMessage(audioFile!!, userLocation)
+
+                            addSystemWaitProcess(R.string.system_msg_process_text_message)
+                            val locationsID = messageService.getMapMessageLocationsId()
+                            val encodedAudio = FileHelper().encodeFileToBase64(audioFile)
+                            val request = QuestionRequest(encodedAudio, AUDIO, locationsID)
+
                             val response = integrationService.answerQuestionAsync(request)
                             messageService.createAudioMessage(response.response)
                         } catch (e: Exception) {
@@ -116,6 +118,26 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         }
     }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 200) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permissão foi concedida. Pode chamar o método record novamente se necessário.
+            } else {
+                // Permissão negada. Notifique o usuário ou desabilite o recurso.
+                AlertDialog.Builder(this)
+                    .setTitle("Permissão necessária")
+                    .setMessage("Para gravar áudios, é necessário permitir o uso do microfone.")
+                    .setPositiveButton("Ok") { dialog, _ -> dialog.dismiss() }
+                    .show()
+            }
+        }
+    }
+
     private fun configureListenerForSendMessages() {
         binding.chatSendMessageIcon.setOnClickListener {
             val message = binding.chatInputMessage.text.toString()
@@ -123,20 +145,23 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
                     if (message.isNotEmpty()) {
-                        messageService.createUserTextMessage(message) {}
+                        binding.chatInputMessage.setText("")
+
+                        val userLocation = UserLocationService2.getUserLocation()
+                        messageService.createUserTextMessage(message, userLocation)
                         addSystemWaitProcess(R.string.system_msg_process_text_message)
+                        notifyDataSetChanged()
 
                         val locationsID = messageService.getMapMessageLocationsId()
                         val questionRequest = QuestionRequest(message, TEXT, locationsID)
                         val answerResponse = integrationService.answerQuestionAsync(questionRequest)
                         val response = answerResponse.response
-                        messageService.createSystemTextMessage(response){}
+                        messageService.createSystemTextMessage(response, userLocation)
                     }
                 } catch (e: Exception) {
                     showErrorDialog("Responser pergunta de texto", e)
                 }
 
-                binding.chatInputMessage.setText("")
                 removeSystemWaitProcess()
                 notifyDataSetChanged()
                 scrollToBottom()
@@ -177,8 +202,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
     }
 
     private fun initialize() {
-        CurrentLocationService.initialize(this)
-        UserLocationService.initialize(this)
+        UserLocationService2.initialize(this)
         this.audioService = AudioService(this)
         this.messageService = MessageService(this)
         this.integrationService = IntegrationService(this)

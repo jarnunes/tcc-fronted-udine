@@ -9,7 +9,7 @@ open class Message : Serializable {
     var sentId: String? = null
     var messageType: MessageType = MessageType.TEXT
     var resourcePath: String? = null
-    private lateinit var userLocation: UserLocation
+    var userLocation: UserLocation? = null
 
     constructor()
 
@@ -18,14 +18,6 @@ open class Message : Serializable {
         this.sentId = senderIdIn
         this.resourcePath = resourcePathIn
         this.userLocation = UserLocation()
-    }
-
-    fun setUserLocation(userLocation: UserLocation) {
-        this.userLocation = userLocation
-    }
-
-    fun getUserLocation(): UserLocation {
-        return this.userLocation
     }
 
 }

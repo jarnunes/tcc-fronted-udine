@@ -6,7 +6,6 @@ import com.jarnunes.udinetour.MainActivity
 import com.jarnunes.udinetour.helper.DeviceHelper
 import com.jarnunes.udinetour.helper.FileHelper
 import com.jarnunes.udinetour.integrations.dto.Place
-import com.jarnunes.udinetour.maps.location.UserLocationService
 import java.io.File
 import java.time.LocalDateTime
 
@@ -15,27 +14,23 @@ class MessageService(private val activity: MainActivity) {
     private var fileHelper: FileHelper = FileHelper()
     private var deviceHelper: DeviceHelper = DeviceHelper()
 
-    fun createUserTextMessage(message: String, beforeCreateMessageCallback: (ArrayList<Message>) -> Unit) {
-        createTextMessage(message, SenderMessageType.USER, beforeCreateMessageCallback)
+    fun createUserTextMessage(message: String, userLocation: UserLocation) {
+        createTextMessage(message, SenderMessageType.USER, userLocation)
     }
 
-    fun createSystemTextMessage(message: String, beforeCreateMessageCallback: (ArrayList<Message>) -> Unit) {
-        createTextMessage(message, SenderMessageType.SYSTEM, beforeCreateMessageCallback)
+    fun createSystemTextMessage(message: String, userLocation: UserLocation) {
+        createTextMessage(message, SenderMessageType.SYSTEM, userLocation)
     }
 
-    private fun createTextMessage(
-        message: String,
-        senderType: SenderMessageType,
-        beforeCreateMessageCallback: (ArrayList<Message>) -> Unit
-    ) {
+    private fun createTextMessage(message: String, senderType: SenderMessageType,
+        userLocation: UserLocation) {
         val messageObject = Message()
         messageObject.message = message
         messageObject.messageType = MessageType.TEXT
         messageObject.sentId = getSentId(senderType)
-        UserLocationService.lastUserLocation?.let { messageObject.setUserLocation(it) }
+        messageObject.userLocation = userLocation
         messageList.add(messageObject)
         writeMessages()
-        beforeCreateMessageCallback(messageList)
     }
 
     private fun writeMessages(){
@@ -50,8 +45,8 @@ class MessageService(private val activity: MainActivity) {
         }
     }
 
-    fun createUserAudioMessage(audioFile: File) {
-        createAudioMessage(audioFile, SenderMessageType.USER)
+    fun createUserAudioMessage(audioFile: File, userLocation: UserLocation) {
+        createAudioMessage(audioFile, SenderMessageType.USER, userLocation)
     }
 
     @SuppressLint("NewApi")
@@ -70,13 +65,13 @@ class MessageService(private val activity: MainActivity) {
         writeMessages()
     }
 
-    fun createSystemAudioMessage(audioFile: File) {
-        createAudioMessage(audioFile, SenderMessageType.SYSTEM)
+    fun createSystemAudioMessage(audioFile: File, userLocation: UserLocation) {
+        createAudioMessage(audioFile, SenderMessageType.SYSTEM, userLocation)
     }
 
-    private fun createAudioMessage(audioFile: File, senderType: SenderMessageType) {
+    private fun createAudioMessage(audioFile: File, senderType: SenderMessageType, userLocation: UserLocation) {
         val audioMessage = Message()
-        UserLocationService.lastUserLocation?.let { audioMessage.setUserLocation(it) }
+        audioMessage.userLocation = userLocation
         audioMessage.resourcePath = audioFile.absolutePath
         audioMessage.sentId = getSentId(senderType)
         audioMessage.messageType = MessageType.AUDIO
@@ -129,10 +124,9 @@ class MessageService(private val activity: MainActivity) {
         messageList.removeIf{msg -> msg.messageType == MessageType.MAP}
 
         val mapMessage = MapMessage()
-        mapMessage.setUserLocation(location)
+        mapMessage.userLocation = location
         mapMessage.places = places
         mapMessage.sentId = getSentId(SenderMessageType.SYSTEM)
-        mapMessage.setUserLocation(location)
         messageList.add(mapMessage)
         writeMessages()
     }
@@ -150,7 +144,6 @@ class MessageService(private val activity: MainActivity) {
         message.resourcePath = audio.absolutePath
         message.sentId = getSentId(SenderMessageType.SYSTEM)
         message.messageType = MessageType.AUDIO
-        UserLocationService.lastUserLocation?.let { message.setUserLocation(it) }
         messageList.add(message)
         writeMessages()
     }
