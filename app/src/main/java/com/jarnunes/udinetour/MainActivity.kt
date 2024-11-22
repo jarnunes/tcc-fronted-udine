@@ -25,7 +25,7 @@ import com.jarnunes.udinetour.integrations.dto.QuestionFormatType.AUDIO
 import com.jarnunes.udinetour.integrations.dto.QuestionFormatType.TEXT
 import com.jarnunes.udinetour.integrations.dto.QuestionRequest
 import com.jarnunes.udinetour.maps.location.ActivityResultProvider
-import com.jarnunes.udinetour.maps.location.UserLocationService2
+import com.jarnunes.udinetour.maps.location.UserLocationService
 import com.jarnunes.udinetour.message.MessageService
 import com.jarnunes.udinetour.recorder.AudioService
 import kotlinx.coroutines.CoroutineScope
@@ -65,11 +65,10 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
                     addSystemWaitProcess(R.string.system_msg_search_nearby_places)
-                    val location = UserLocationService2.getUserLocation()
+                    val location = UserLocationService.getUserLocation()
 
                     val placesResponse = integrationService.getNearbyPlacesAsync(location)
                     messageService.createMapMessage(location, placesResponse.results)
-                    notifyDataSetChanged()
 
                     val locationsDescription = integrationService
                         .generateAudioDescriptionFromPlacesNameAsync(placesResponse.results.map { it.name }
@@ -91,7 +90,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                 afterStopRecordCallback = { audioFile ->
                     CoroutineScope(Dispatchers.Main).launch {
                         try {
-                            val userLocation = UserLocationService2.getUserLocation()
+                            val userLocation = UserLocationService.getUserLocation()
                             binding.audioRecorder.setImageResource(R.drawable.baseline_mic_24)
                             messageService.createUserAudioMessage(audioFile!!, userLocation)
 
@@ -147,7 +146,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                     if (message.isNotEmpty()) {
                         binding.chatInputMessage.setText("")
 
-                        val userLocation = UserLocationService2.getUserLocation()
+                        val userLocation = UserLocationService.getUserLocation()
                         messageService.createUserTextMessage(message, userLocation)
                         addSystemWaitProcess(R.string.system_msg_process_text_message)
                         notifyDataSetChanged()
@@ -202,7 +201,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
     }
 
     private fun initialize() {
-        UserLocationService2.initialize(this)
+        UserLocationService.initialize(this)
         this.audioService = AudioService(this)
         this.messageService = MessageService(this)
         this.integrationService = IntegrationService(this)

@@ -39,6 +39,7 @@ class MessageAdapter(
     private val itemSentCode = 2
     private var currentMediaPlayer: MediaPlayer? = null
     private var currentPlayButton: ImageView? = null
+    private var isMapInitialized = false
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         if (viewType == 1) {
@@ -149,10 +150,13 @@ class MessageAdapter(
             }
 
             MessageType.MAP -> {
-                initMapService(viewHolder.receiveMap.id)
+                if (!isMapInitialized) {
+                    initMapService(viewHolder.receiveMap.id)
+                    isMapInitialized = true
+                }
+
                 viewHolder.receiveMap.visibility = View.VISIBLE
                 mapService?.createMap(currentMessage as MapMessage)
-
             }
 
             MessageType.IMAGE, MessageType.LOCATION -> {}

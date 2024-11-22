@@ -1,3 +1,5 @@
+import java.io.FileInputStream
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -8,12 +10,17 @@ android {
     namespace = "com.jarnunes.udinetour"
     compileSdk = 34
 
+    val file = project.rootProject.file("local.properties")
+    val properties = Properties()
+    properties.load(FileInputStream(file))
+
     defaultConfig {
         applicationId = "com.jarnunes.udinetour"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        manifestPlaceholders["GMP_KEY"] = properties.getProperty("GMP_KEY")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
