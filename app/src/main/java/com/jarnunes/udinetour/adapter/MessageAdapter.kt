@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView.GONE
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.jarnunes.udinetour.MainActivity
 import com.jarnunes.udinetour.R
+import com.jarnunes.udinetour.commons.TextUtils
 import com.jarnunes.udinetour.helper.DeviceHelper
 import com.jarnunes.udinetour.helper.FileHelper
 import com.jarnunes.udinetour.holder.ReceiveViewHolder
@@ -136,6 +137,7 @@ class MessageAdapter(
             MessageType.TEXT, MessageType.SYSTEM_WAIT,  MessageType.SYSTEM_WAIT_START -> {
                 viewHolder.receiveMessage.text = currentMessage.message
                 viewHolder.receiveMessage.visibility = View.VISIBLE
+                TextUtils.applyBoldToAsterisks(viewHolder.receiveMessage, currentMessage.message!!)
             }
 
             MessageType.AUDIO -> {
