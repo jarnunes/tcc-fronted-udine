@@ -135,7 +135,7 @@ class MessageService(private val activity: MainActivity) {
         return messageList.filter { it.messageType == MessageType.MAP }
             .map { it as MapMessage }
             .flatMap { it.places }
-            .map { it.place_id }.toList()
+            .map { it.id }.toList()
     }
 
     fun createAudioMessage(encodedAudioBase64: String) {

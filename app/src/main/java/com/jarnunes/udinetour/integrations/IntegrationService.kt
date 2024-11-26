@@ -1,9 +1,11 @@
 package com.jarnunes.udinetour.integrations
 
 import android.content.Context
-import android.location.Location
 import com.jarnunes.udinetour.R
-import com.jarnunes.udinetour.integrations.dto.NearbyPlacesRequest
+import com.jarnunes.udinetour.integrations.dto.PlacesRequest
+import com.jarnunes.udinetour.integrations.dto.PlacesRequestRestriction
+import com.jarnunes.udinetour.integrations.dto.PlacesRequestRestrictionCenter
+import com.jarnunes.udinetour.integrations.dto.PlacesRequestRestrictionCircle
 import com.jarnunes.udinetour.integrations.dto.PlacesResponse
 import com.jarnunes.udinetour.integrations.dto.QuestionRequest
 import com.jarnunes.udinetour.integrations.dto.QuestionResponse
@@ -40,16 +42,27 @@ class IntegrationService(val context: Context) {
     }
 
     suspend fun answerQuestionAsync(request: QuestionRequest): QuestionResponse {
-        return invocation{service -> service.answerQuestionAsync(request)}
+        val retrofit = createRetrofit()
+        val apiService = retrofit.create(AwsFunctionService::class.java)
+        return apiService.answerQuestionAsync(request)
+
     }
 
     suspend fun generateAudioDescriptionFromPlacesNameAsync(request: List<String>): TextToSpeechResponse {
-        return invocation { service -> service.generateAudioDescriptionFromPlacesNameAsync(request) }
+        val retrofit = createRetrofit()
+        val apiService = retrofit.create(AwsFunctionService::class.java)
+        return apiService.generateAudioDescriptionFromPlacesNameAsync(request)
     }
 
     suspend fun getNearbyPlacesAsync(location: UserLocation): PlacesResponse {
-        val request = NearbyPlacesRequest(location.latitude!!, location.longitude!!, 1000)
-        return invocation { service -> service.getNearbyPlacesAsync(request) }
+        val center = PlacesRequestRestrictionCenter(location.latitude!!, location.longitude!!)
+        val circle = PlacesRequestRestrictionCircle(center, null)
+        val restriction = PlacesRequestRestriction(circle)
+        val request = PlacesRequest(restriction, null, null)
+
+        val retrofit = createRetrofit()
+        val apiService = retrofit.create(AwsFunctionService::class.java)
+        return apiService.getNearbyPlacesAsync(request)
     }
 
 }

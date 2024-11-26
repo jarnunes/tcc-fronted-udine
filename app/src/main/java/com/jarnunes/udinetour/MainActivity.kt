@@ -68,11 +68,12 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                     val location = UserLocationService.getUserLocation()
 
                     val placesResponse = integrationService.getNearbyPlacesAsync(location)
-                    messageService.createMapMessage(location, placesResponse.results)
+                    messageService.createMapMessage(location, placesResponse.places)
 
                     val locationsDescription = integrationService
-                        .generateAudioDescriptionFromPlacesNameAsync(placesResponse.results.map { it.name }
-                            .toList())
+                        .generateAudioDescriptionFromPlacesNameAsync(placesResponse.places
+                            .map{ it.displayName }.map { it.text }.toList())
+
                     messageService.createAudioMessage(locationsDescription.audioContent)
                     notifyDataSetChanged()
                 } catch (e: Exception) {
@@ -106,8 +107,6 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                             showErrorDialog("Responder pergunta via audio.", e)
                         }
                         removeSystemWaitProcess()
-                        notifyDataSetChanged()
-                        scrollToBottom()
                     }
                 },
                 afterStartRecordCallback = {
@@ -182,6 +181,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         binding.chatSendMessageIcon.setImageResource(R.drawable.baseline_disabled_send_24)
         binding.chatSendMessageIcon.isEnabled = false
         notifyDataSetChanged()
+        scrollToBottom()
     }
 
     private fun removeSystemWaitProcess() {
@@ -189,6 +189,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         binding.chatSendMessageIcon.setImageResource(R.drawable.baseline_send_24)
         binding.chatSendMessageIcon.isEnabled = true
         notifyDataSetChanged()
+        scrollToBottom()
     }
 
     private fun configureMainView() {

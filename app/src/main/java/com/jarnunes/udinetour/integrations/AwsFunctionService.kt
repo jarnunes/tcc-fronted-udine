@@ -1,6 +1,6 @@
 package com.jarnunes.udinetour.integrations
 
-import com.jarnunes.udinetour.integrations.dto.NearbyPlacesRequest
+import com.jarnunes.udinetour.integrations.dto.PlacesRequest
 import com.jarnunes.udinetour.integrations.dto.PlacesResponse
 import com.jarnunes.udinetour.integrations.dto.QuestionRequest
 import com.jarnunes.udinetour.integrations.dto.QuestionResponse
@@ -13,7 +13,7 @@ interface AwsFunctionService {
 
     @POST("/nearbyPlaces")
     @Headers("spring.cloud.function.definition: nearbyPlaces")
-    suspend fun getNearbyPlacesAsync(@Body request: NearbyPlacesRequest): PlacesResponse
+    suspend fun getNearbyPlacesAsync(@Body request: PlacesRequest): PlacesResponse
 
     @POST("/generateShortAudioDescriptionFromPlacesName")
     @Headers("spring.cloud.function.definition: generateShortAudioDescriptionFromPlacesName")

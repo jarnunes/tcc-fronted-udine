@@ -3,13 +3,13 @@ package com.jarnunes.udinetour.maps
 import androidx.fragment.app.FragmentManager
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.GoogleMapOptions
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.MarkerOptions
 import com.jarnunes.udinetour.MainActivity
 import com.jarnunes.udinetour.R
+import com.jarnunes.udinetour.commons.ILog
 import com.jarnunes.udinetour.message.MapMessage
 
 class MapService(
@@ -48,14 +48,22 @@ class MapService(
     }
 
     private fun addTouristsPointMarker(googleMap: GoogleMap, message: MapMessage) {
+
         message.places.forEach { place ->
-            val placeLoc = place.geometry.location
-            val customIcon = PlaceType.bitmapDescriptorFactory(place.types)
-            val loc = LatLng(placeLoc.lat, placeLoc.lng)
-            val marker = googleMap.addMarker(
-                MarkerOptions().position(loc).title(place.name).icon(customIcon)
-            )
-            marker?.showInfoWindow()
+            try {
+
+                val placeLoc = place.location
+                val customIcon = PlaceType.bitmapDescriptorFactory(place.types)
+                val loc = LatLng(placeLoc.latitude, placeLoc.longitude)
+                val marker = googleMap.addMarker(
+                    MarkerOptions().position(loc).title(place.displayName.text).icon(customIcon)
+                )
+                marker?.showInfoWindow()
+
+
+            } catch (exception: Exception) {
+                ILog.e(ILog.MAP_SERVICE, exception)
+            }
         }
     }
 }

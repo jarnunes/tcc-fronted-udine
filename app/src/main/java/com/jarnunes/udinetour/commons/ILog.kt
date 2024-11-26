@@ -3,9 +3,11 @@ package com.jarnunes.udinetour.commons
 import android.util.Log
 import com.jarnunes.udinetour.helper.FileHelper
 import com.jarnunes.udinetour.integrations.IntegrationService
+import com.jarnunes.udinetour.maps.MapService
 
 enum class ILog(tagName: String) {
 
+    MAP_SERVICE(MapService::class.simpleName.toString()),
     FILE_HELPER(FileHelper::class.simpleName.toString()),
     INTEGRATION_SERVICE(IntegrationService::class.simpleName.toString());
 
