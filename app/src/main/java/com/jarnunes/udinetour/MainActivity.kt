@@ -24,6 +24,7 @@ import com.jarnunes.udinetour.integrations.IntegrationService
 import com.jarnunes.udinetour.integrations.dto.QuestionFormatType.AUDIO
 import com.jarnunes.udinetour.integrations.dto.QuestionFormatType.TEXT
 import com.jarnunes.udinetour.integrations.dto.QuestionRequest
+import com.jarnunes.udinetour.integrations.dto.QuestionResponse
 import com.jarnunes.udinetour.maps.location.ActivityResultProvider
 import com.jarnunes.udinetour.maps.location.UserLocationService
 import com.jarnunes.udinetour.message.MessageService
@@ -101,7 +102,9 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                             val request = QuestionRequest(encodedAudio, AUDIO, locationsID)
 
                             val response = integrationService.answerQuestionAsync(request)
+
                             messageService.createAudioMessage(response.response)
+                            saveImagesAndCreateImageMessages(response)
                         } catch (e: Exception) {
                             ILog.e(ILog.INTEGRATION_SERVICE, e)
                             showErrorDialog("Responder pergunta via audio.", e)
@@ -113,6 +116,18 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                     binding.audioRecorder.setImageResource(R.drawable.sharp_mic_off_24)
                 }
             )
+        }
+    }
+
+    private fun saveImagesAndCreateImageMessages(response: QuestionResponse){
+        if(response.placePhotos.isNotEmpty()) {
+            val photoNames = ArrayList<String>()
+            response.placePhotos
+                .map { FileHelper().createImageFile(it.name, it.content, applicationContext) }
+                .map { it.absolutePath }
+                .forEach { path -> photoNames.add(path) }
+
+            messageService.createImagesMessage(photoNames)
         }
     }
 
@@ -155,6 +170,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                         val answerResponse = integrationService.answerQuestionAsync(questionRequest)
                         val response = answerResponse.response
                         messageService.createSystemTextMessage(response, userLocation)
+                        saveImagesAndCreateImageMessages(answerResponse)
                     }
                 } catch (e: Exception) {
                     showErrorDialog("Responser pergunta de texto", e)

@@ -9,7 +9,7 @@ import retrofit2.http.Body
 import retrofit2.http.Headers
 import retrofit2.http.POST
 
-interface AwsFunctionService {
+interface UdineApiService {
 
     @POST("/nearbyPlaces")
     @Headers("spring.cloud.function.definition: nearbyPlaces")

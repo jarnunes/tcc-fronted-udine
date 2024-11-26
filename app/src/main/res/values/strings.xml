@@ -11,8 +11,8 @@
     <string name="txt_sent_audio_description">This is a sent audio</string>
 
     <!-- API -->
-    <string name="url_udine_aws_function">http://udinne.sa-east-1.elasticbeanstalk.com</string>
-<!--     <string name="url_udine_aws_function">http://192.168.18.2:5000</string>-->
+<!--    <string name="url_udine_aws_function">http://udinne.sa-east-1.elasticbeanstalk.com</string>-->
+     <string name="url_udine_aws_function">http://192.168.18.2:5000</string>
     <string name="google_places_url">https://maps.googleapis.com/maps/api/place/</string>
 
     <!-- Strings used for fragments for navigation -->

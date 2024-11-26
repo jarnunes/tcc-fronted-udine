@@ -35,22 +35,22 @@ class IntegrationService(val context: Context) {
             .build();
     }
 
-    private suspend fun <T> invocation(callback: suspend (AwsFunctionService) -> T): T {
+    private suspend fun <T> invocation(callback: suspend (UdineApiService) -> T): T {
         val retrofit = createRetrofit()
-        val apiService = retrofit.create(AwsFunctionService::class.java)
+        val apiService = retrofit.create(UdineApiService::class.java)
         return callback(apiService)
     }
 
     suspend fun answerQuestionAsync(request: QuestionRequest): QuestionResponse {
         val retrofit = createRetrofit()
-        val apiService = retrofit.create(AwsFunctionService::class.java)
+        val apiService = retrofit.create(UdineApiService::class.java)
         return apiService.answerQuestionAsync(request)
 
     }
 
     suspend fun generateAudioDescriptionFromPlacesNameAsync(request: List<String>): TextToSpeechResponse {
         val retrofit = createRetrofit()
-        val apiService = retrofit.create(AwsFunctionService::class.java)
+        val apiService = retrofit.create(UdineApiService::class.java)
         return apiService.generateAudioDescriptionFromPlacesNameAsync(request)
     }
 
@@ -61,7 +61,7 @@ class IntegrationService(val context: Context) {
         val request = PlacesRequest(restriction, null, null)
 
         val retrofit = createRetrofit()
-        val apiService = retrofit.create(AwsFunctionService::class.java)
+        val apiService = retrofit.create(UdineApiService::class.java)
         return apiService.getNearbyPlacesAsync(request)
     }
 

@@ -23,6 +23,8 @@ class ReceiveViewHolder(itemView: View, fragmentManager: FragmentManager) :
     val receiveAudioDuration = itemView.findViewById<TextView>(R.id.receiveAudioDuration)
     val receiveAudioSeekBar = itemView.findViewById<SeekBar>(R.id.receiveAudioSeekBar)
     var receiveMap = itemView.findViewById<FrameLayout>(R.id.map_container)
+    var receiveImageGallery = itemView.findViewById<RecyclerView>(R.id.receiveImageGallery)
+
     private var googleMap: GoogleMap? = null
 
     init {

@@ -12,15 +12,18 @@ import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.fragment.app.FragmentManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.GONE
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.jarnunes.udinetour.MainActivity
 import com.jarnunes.udinetour.R
 import com.jarnunes.udinetour.helper.DeviceHelper
+import com.jarnunes.udinetour.helper.FileHelper
 import com.jarnunes.udinetour.holder.ReceiveViewHolder
 import com.jarnunes.udinetour.holder.SentViewHolder
 import com.jarnunes.udinetour.maps.MapService
+import com.jarnunes.udinetour.message.ImageMessage
 import com.jarnunes.udinetour.message.MapMessage
 import com.jarnunes.udinetour.message.Message
 import com.jarnunes.udinetour.message.MessageType
@@ -159,7 +162,18 @@ class MessageAdapter(
                 mapService?.createMap(currentMessage as MapMessage)
             }
 
-            MessageType.IMAGE, MessageType.LOCATION -> {}
+            MessageType.IMAGE -> {
+                val imageMessage = currentMessage as ImageMessage
+                if (imageMessage.pathNames.isNotEmpty()) {
+                    val files = FileHelper().readFilesAsByteArray(imageMessage.pathNames)
+                    val adapter = ImageGalleryAdapter(files)
+                    viewHolder.receiveImageGallery.adapter = adapter
+                    viewHolder.receiveImageGallery.layoutManager =
+                        LinearLayoutManager(holder.itemView.context, LinearLayoutManager.HORIZONTAL, false)
+                    viewHolder.receiveImageGallery.visibility = View.VISIBLE
+                }
+            }
+            MessageType.LOCATION -> {}
         }
     }
 

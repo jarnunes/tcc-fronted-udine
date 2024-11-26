@@ -62,4 +62,15 @@
             android:text="0:00" />
     </LinearLayout>
 
+    <!-- Image Gallery -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/receiveImageGallery"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:visibility="gone"
+        android:orientation="horizontal"
+        android:clipToPadding="false"
+        android:padding="5dp" />
+
 </RelativeLayout>

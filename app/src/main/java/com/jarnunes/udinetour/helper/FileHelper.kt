@@ -5,7 +5,6 @@ import android.content.Context
 import android.net.Uri
 import android.util.Base64
 import android.util.Log
-import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.jarnunes.udinetour.R
 import com.jarnunes.udinetour.commons.ILog
@@ -55,11 +54,31 @@ class FileHelper {
         }
     }
 
-    fun createImageURI(context: Context): Uri {
-        createFileDir(context, "images")
+    fun readFilesAsByteArray(filesName: List<String>): List<ByteArray>{
+        val files = ArrayList<ByteArray>()
+        filesName.mapNotNull { readFileAsByteArray(it) }.forEach { files.add(it) }
+        return files
+    }
 
-        val image = File(context.filesDir, "images/udine_tour_${System.currentTimeMillis()}.png")
-        return FileProvider.getUriForFile(context, "com.jarnunes.udinetour.provider", image)
+    private fun readFileAsByteArray(filePath: String): ByteArray? {
+        return try {
+            val file = File(filePath)
+            if (file.exists()) {
+                file.readBytes()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    fun createImageFile(fileName: String, content: String, context: Context): File {
+        createFileDir(context, "images")
+        val image = File(context.filesDir, "images/${fileName}")
+        saveFile(context, image.toUri(), decodeBase64ToByteArray(content))
+        return image
     }
 
     fun createAudioFile(context: Context): File {
@@ -77,7 +96,7 @@ class FileHelper {
     fun createAudioFile(context: Context, base64String: String): File {
         val byteArray = decodeBase64ToByteArray(base64String)
         val file = createAudioFile(context)
-        saveAudioToFile(context, file.toUri(), byteArray)
+        saveFile(context, file.toUri(), byteArray)
 
         return file
     }
@@ -92,7 +111,7 @@ class FileHelper {
         //return Base64.encodeToString(audio.readBytes(), Base64.DEFAULT)
     }
 
-    fun saveAudioToFile(context: Context, uri: Uri, audioData: ByteArray) {
+    private fun saveFile(context: Context, uri: Uri, audioData: ByteArray) {
         try {
             // Abre o OutputStream usando o ContentResolver
             val outputStream = context.contentResolver.openOutputStream(uri)
