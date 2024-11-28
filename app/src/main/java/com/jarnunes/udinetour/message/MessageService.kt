@@ -120,22 +120,15 @@ class MessageService(private val activity: MainActivity) {
         return messageList
     }
 
-    fun createMapMessage(location: UserLocation, places: ArrayList<Place>) {
+    fun createMapMessage(location: UserLocation, places: List<Place>) {
         messageList.removeIf{msg -> msg.messageType == MessageType.MAP}
 
         val mapMessage = MapMessage()
         mapMessage.userLocation = location
-        mapMessage.places = places
+        mapMessage.places = ArrayList(places)
         mapMessage.sentId = getSentId(SenderMessageType.SYSTEM)
         messageList.add(mapMessage)
         writeMessages()
-    }
-
-    fun getMapMessageLocationsId(): List<String> {
-        return messageList.filter { it.messageType == MessageType.MAP }
-            .map { it as MapMessage }
-            .flatMap { it.places }
-            .map { it.id }.toList()
     }
 
     fun createAudioMessage(encodedAudioBase64: String) {

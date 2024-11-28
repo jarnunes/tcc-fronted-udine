@@ -25,6 +25,7 @@ import com.jarnunes.udinetour.integrations.dto.QuestionFormatType.AUDIO
 import com.jarnunes.udinetour.integrations.dto.QuestionFormatType.TEXT
 import com.jarnunes.udinetour.integrations.dto.QuestionRequest
 import com.jarnunes.udinetour.integrations.dto.QuestionResponse
+import com.jarnunes.udinetour.maps.MapService
 import com.jarnunes.udinetour.maps.location.ActivityResultProvider
 import com.jarnunes.udinetour.maps.location.UserLocationService
 import com.jarnunes.udinetour.message.MessageService
@@ -57,7 +58,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
 
     private fun configureMessageAdapter() {
         this.messageAdapter =
-            MessageAdapter(this, messageService.getAllMessages(), supportFragmentManager)
+            MessageAdapter(this, messageService.getAllMessages())
         notifyDataSetChanged()
     }
 
@@ -67,15 +68,9 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                 try {
                     addSystemWaitProcess(R.string.system_msg_search_nearby_places)
                     val location = UserLocationService.getUserLocation()
-
                     val placesResponse = integrationService.getNearbyPlacesAsync(location)
                     messageService.createMapMessage(location, placesResponse.places)
-
-                    val locationsDescription = integrationService
-                        .generateAudioDescriptionFromPlacesNameAsync(placesResponse.places
-                            .map{ it.displayName }.map { it.text }.toList())
-
-                    messageService.createAudioMessage(locationsDescription.audioContent)
+                    messageService.createAudioMessage(placesResponse.audioDescriptionContent)
                     notifyDataSetChanged()
                 } catch (e: Exception) {
                     showErrorDialog("Obter localização, locais próximos e gerar descrição.", e)
@@ -97,10 +92,8 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                             messageService.createUserAudioMessage(audioFile!!, userLocation)
 
                             addSystemWaitProcess(R.string.system_msg_process_text_message)
-                            val locationsID = messageService.getMapMessageLocationsId()
                             val encodedAudio = FileHelper().encodeFileToBase64(audioFile)
-                            val request = QuestionRequest(encodedAudio, AUDIO, locationsID)
-
+                            val request = QuestionRequest(encodedAudio, AUDIO, userLocation)
                             val response = integrationService.answerQuestionAsync(request)
 
                             messageService.createAudioMessage(response.response)
@@ -165,8 +158,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                         addSystemWaitProcess(R.string.system_msg_process_text_message)
                         notifyDataSetChanged()
 
-                        val locationsID = messageService.getMapMessageLocationsId()
-                        val questionRequest = QuestionRequest(message, TEXT, locationsID)
+                        val questionRequest = QuestionRequest(message, TEXT, userLocation)
                         val answerResponse = integrationService.answerQuestionAsync(questionRequest)
                         val response = answerResponse.response
                         messageService.createSystemTextMessage(response, userLocation)
@@ -218,6 +210,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
     }
 
     private fun initialize() {
+        MapService.init(this)
         UserLocationService.initialize(this)
         this.audioService = AudioService(this)
         this.messageService = MessageService(this)

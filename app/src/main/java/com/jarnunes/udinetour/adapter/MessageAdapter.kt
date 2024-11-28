@@ -14,7 +14,6 @@ import android.widget.TextView
 import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.GONE
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.jarnunes.udinetour.MainActivity
 import com.jarnunes.udinetour.R
@@ -28,29 +27,24 @@ import com.jarnunes.udinetour.message.ImageMessage
 import com.jarnunes.udinetour.message.MapMessage
 import com.jarnunes.udinetour.message.Message
 import com.jarnunes.udinetour.message.MessageType
-import com.jarnunes.udinetour.recorder.AndroidAudioPlayer
 
 class MessageAdapter(
     private val mainActivity: MainActivity,
-    private val messageList: ArrayList<Message>,
-    private val fragmentManager: FragmentManager
+    private val messageList: ArrayList<Message>
 ) : RecyclerView.Adapter<ViewHolder>() {
 
-
-    private var mapService: MapService? = null
     private var deviceHelper = DeviceHelper()
     private val itemReceiveCode = 1
     private val itemSentCode = 2
     private var currentMediaPlayer: MediaPlayer? = null
     private var currentPlayButton: ImageView? = null
-    private var isMapInitialized = false
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         if (viewType == 1) {
             // inflate receive
             val view: View =
                 LayoutInflater.from(mainActivity).inflate(R.layout.receive, parent, false)
-            return ReceiveViewHolder(view, fragmentManager)
+            return ReceiveViewHolder(view)
         } else {
             // inflate sent
             val view: View = LayoutInflater.from(mainActivity).inflate(R.layout.sent, parent, false)
@@ -118,12 +112,6 @@ class MessageAdapter(
         }
     }
 
-    private fun initMapService(containerViewId: Int) {
-        if (mapService == null) {
-            mapService = MapService(containerViewId, mainActivity, fragmentManager)
-        }
-    }
-
     private fun configureReceiveViewHolder(holder: ViewHolder, currentMessage: Message) {
         val viewHolder = holder as ReceiveViewHolder
         viewHolder.receiveMessage.visibility = View.GONE
@@ -131,7 +119,8 @@ class MessageAdapter(
         viewHolder.receiveAudioLayout.visibility = View.GONE
         viewHolder.receiveAudioDuration.visibility = View.GONE
         viewHolder.receiveAudioSeekBar.visibility = View.GONE
-        viewHolder.receiveMap.visibility = GONE
+        viewHolder.receiveImageGallery.visibility = View.GONE
+        viewHolder.receiveMapView.visibility = View.GONE
 
         when (currentMessage.messageType) {
             MessageType.TEXT, MessageType.SYSTEM_WAIT,  MessageType.SYSTEM_WAIT_START -> {
@@ -155,13 +144,14 @@ class MessageAdapter(
             }
 
             MessageType.MAP -> {
-                if (!isMapInitialized) {
-                    initMapService(viewHolder.receiveMap.id)
-                    isMapInitialized = true
+                val mapMessage = currentMessage as MapMessage
+                viewHolder.receiveMapView.visibility = View.VISIBLE
+                viewHolder.receiveMapView.onCreate(null)
+                viewHolder.receiveMapView.getMapAsync { googleMap ->
+                    MapService.removeDefaultConfiguration(googleMap)
+                    MapService.addCurrentLocationPointMarker(googleMap, mapMessage)
+                    MapService.addTouristsPointMarker(googleMap, mapMessage)
                 }
-
-                viewHolder.receiveMap.visibility = View.VISIBLE
-                mapService?.createMap(currentMessage as MapMessage)
             }
 
             MessageType.IMAGE -> {

@@ -2,11 +2,11 @@ package com.jarnunes.udinetour.integrations
 
 import android.content.Context
 import com.jarnunes.udinetour.R
+import com.jarnunes.udinetour.integrations.dto.NearbyPlaceDescriptionResponse
 import com.jarnunes.udinetour.integrations.dto.PlacesRequest
 import com.jarnunes.udinetour.integrations.dto.PlacesRequestRestriction
 import com.jarnunes.udinetour.integrations.dto.PlacesRequestRestrictionCenter
 import com.jarnunes.udinetour.integrations.dto.PlacesRequestRestrictionCircle
-import com.jarnunes.udinetour.integrations.dto.PlacesResponse
 import com.jarnunes.udinetour.integrations.dto.QuestionRequest
 import com.jarnunes.udinetour.integrations.dto.QuestionResponse
 import com.jarnunes.udinetour.integrations.dto.TextToSpeechResponse
@@ -54,7 +54,7 @@ class IntegrationService(val context: Context) {
         return apiService.generateAudioDescriptionFromPlacesNameAsync(request)
     }
 
-    suspend fun getNearbyPlacesAsync(location: UserLocation): PlacesResponse {
+    suspend fun getNearbyPlacesAsync(location: UserLocation): NearbyPlaceDescriptionResponse {
         val center = PlacesRequestRestrictionCenter(location.latitude!!, location.longitude!!)
         val circle = PlacesRequestRestrictionCircle(center, null)
         val restriction = PlacesRequestRestriction(circle)

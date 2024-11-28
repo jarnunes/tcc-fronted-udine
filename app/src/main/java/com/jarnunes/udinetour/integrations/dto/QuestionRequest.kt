@@ -1,7 +1,9 @@
 package com.jarnunes.udinetour.integrations.dto
 
+import com.jarnunes.udinetour.message.UserLocation
+
 data class QuestionRequest(
     val question: String,
     val formatType: QuestionFormatType,
-    val placesId: List<String>
+    val location: UserLocation
 )

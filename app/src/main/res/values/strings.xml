@@ -11,8 +11,14 @@
     <string name="txt_sent_audio_description">This is a sent audio</string>
 
     <!-- API -->
-<!--    <string name="url_udine_aws_function">http://udinne.sa-east-1.elasticbeanstalk.com</string>-->
-     <string name="url_udine_aws_function">http://192.168.18.2:5000</string>
+    <!-- Elastic Beanstalk -->
+    <!-- <string name="url_udine_aws_function">http://udinne.sa-east-1.elasticbeanstalk.com</string>-->
+
+    <!-- Local Network -->
+    <string name="url_udine_aws_function">http://192.168.18.2:5000</string>
+
+    <!-- Guilt's Network-->
+    <!--    <string name="url_udine_aws_function">http://192.168.18.9:5000</string>-->
     <string name="google_places_url">https://maps.googleapis.com/maps/api/place/</string>
 
     <!-- Strings used for fragments for navigation -->
@@ -37,7 +43,7 @@
     <!-- Info -->
     <string name="success_delete_file">Arquivo %s removido com sucesso</string>
     <string name="system_msg_search_nearby_places">Aguarde! Buscando locais próximos…</string>
-    <string name="system_msg_process_text_message">Aguarde! Processando sua requisição…</string>
+    <string name="system_msg_process_text_message">Aguarde! Processando sua pergunta…</string>
 
     <!-- Exceptions -->
     <string name="exception_delete_file">Ocorreu um erro ao deletar o arquivo %s. Detalhes: %s</string>

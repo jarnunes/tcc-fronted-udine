@@ -18,7 +18,6 @@ object UserLocationService {
     private lateinit var activityResultProvider: ActivityResultProvider
     private var isInitialized = false
     private var locationPermissionRequest: ActivityResultLauncher<Array<String>>? = null
-    var lastUserLocation: UserLocation? = null
 
     fun initialize(activityResultProvider: ActivityResultProvider) {
         if (!isInitialized) {

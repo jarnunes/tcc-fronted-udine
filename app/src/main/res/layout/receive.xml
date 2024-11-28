@@ -21,12 +21,11 @@
         android:visibility="gone" />
 
     <!-- Map Messages -->
-    <FrameLayout
-        android:id="@+id/map_container"
+    <com.google.android.gms.maps.MapView
+        android:id="@+id/map_view"
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:background="@drawable/receive_message_background"
-        android:clipToOutline="true"
         android:visibility="gone" />
 
     <!-- Audio Messages -->
