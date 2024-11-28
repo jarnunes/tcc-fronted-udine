@@ -63,7 +63,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
     }
 
     private fun configureInitMessages() {
-        if(messageService.empty()) {
+        if (messageService.empty()) {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
                     addSystemWaitProcess(R.string.system_msg_search_nearby_places)
@@ -112,15 +112,20 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         }
     }
 
-    private fun saveImagesAndCreateImageMessages(response: QuestionResponse){
-        if(response.placePhotos.isNotEmpty()) {
-            val photoNames = ArrayList<String>()
-            response.placePhotos
-                .map { FileHelper().createImageFile(it.name, it.content, applicationContext) }
-                .map { it.absolutePath }
-                .forEach { path -> photoNames.add(path) }
-
-            messageService.createImagesMessage(photoNames)
+    private fun saveImagesAndCreateImageMessages(response: QuestionResponse) {
+        if (response.placePhotos.isNotEmpty()) {
+            response.placePhotos.forEach { place ->
+                val photoNames = ArrayList<String>()
+                place.photos.map {
+                    FileHelper().createImageFile(
+                        it.name,
+                        it.content,
+                        applicationContext
+                    )
+                }
+                    .map { it.absolutePath }.forEach { path -> photoNames.add(path) }
+                messageService.createImagesMessage(place.name, photoNames)
+            }
         }
     }
 
@@ -180,11 +185,11 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         messageAdapter.notifyDataSetChanged()
     }
 
-    private fun scrollToBottom(){
+    private fun scrollToBottom() {
         binding.chatRecycler.scrollToPosition(messageService.messageListCount() - 1)
     }
 
-    private fun addSystemWaitProcess(@StringRes resId:  Int) {
+    private fun addSystemWaitProcess(@StringRes resId: Int) {
         messageService.createSystemWaitStartMessage(resId)
         binding.chatSendMessageIcon.setImageResource(R.drawable.baseline_disabled_send_24)
         binding.chatSendMessageIcon.isEnabled = false

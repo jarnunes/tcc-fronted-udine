@@ -141,10 +141,11 @@ class MessageService(private val activity: MainActivity) {
         writeMessages()
     }
 
-    fun createImagesMessage(photoNames: ArrayList<String>) {
+    fun createImagesMessage(legend: String, photoNames: ArrayList<String>) {
         val message = ImageMessage()
         message.sentId = getSentId(SenderMessageType.SYSTEM)
         message.messageType = MessageType.IMAGE
+        message.legend = legend
         message.pathNames = photoNames
         messageList.add(message)
         writeMessages()

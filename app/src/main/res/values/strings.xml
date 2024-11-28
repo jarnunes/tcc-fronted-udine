@@ -12,13 +12,13 @@
 
     <!-- API -->
     <!-- Elastic Beanstalk -->
-    <!-- <string name="url_udine_aws_function">http://udinne.sa-east-1.elasticbeanstalk.com</string>-->
+    <!-- <string name="url_udine_aws_function">http://tcc-backend.sa-east-1.elasticbeanstalk.com/</string>-->
 
     <!-- Local Network -->
-    <string name="url_udine_aws_function">http://192.168.18.2:5000</string>
+     <string name="url_udine_aws_function">http://192.168.18.2:5000</string>
 
     <!-- Guilt's Network-->
-    <!--    <string name="url_udine_aws_function">http://192.168.18.9:5000</string>-->
+    <!-- <string name="url_udine_aws_function">http://192.168.18.9:5000</string>-->
     <string name="google_places_url">https://maps.googleapis.com/maps/api/place/</string>
 
     <!-- Strings used for fragments for navigation -->

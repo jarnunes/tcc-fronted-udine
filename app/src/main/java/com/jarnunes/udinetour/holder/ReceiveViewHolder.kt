@@ -17,6 +17,8 @@ class ReceiveViewHolder(itemView: View) :
     val receiveAudioDuration = itemView.findViewById<TextView>(R.id.receiveAudioDuration)
     val receiveAudioSeekBar = itemView.findViewById<SeekBar>(R.id.receiveAudioSeekBar)
     var receiveMapView = itemView.findViewById<MapView>(R.id.map_view)
+    var receiveImageGalleryContainer = itemView.findViewById<LinearLayout>(R.id.receiveImageGalleryContainer)
     var receiveImageGallery = itemView.findViewById<RecyclerView>(R.id.receiveImageGallery)
+    var receiveImageGalleryTitle = itemView.findViewById<TextView>(R.id.receiveImageGalleryTitle)
 
 }

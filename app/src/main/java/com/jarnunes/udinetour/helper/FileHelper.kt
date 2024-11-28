@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.core.net.toUri
 import com.jarnunes.udinetour.R
 import com.jarnunes.udinetour.commons.ILog
+import com.jarnunes.udinetour.integrations.dto.Photo
 import com.jarnunes.udinetour.message.Message
 import java.io.File
 import java.io.FileInputStream

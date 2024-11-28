@@ -119,7 +119,9 @@ class MessageAdapter(
         viewHolder.receiveAudioLayout.visibility = View.GONE
         viewHolder.receiveAudioDuration.visibility = View.GONE
         viewHolder.receiveAudioSeekBar.visibility = View.GONE
+        viewHolder.receiveImageGalleryContainer.visibility = View.GONE
         viewHolder.receiveImageGallery.visibility = View.GONE
+        viewHolder.receiveImageGalleryTitle.visibility = View.GONE
         viewHolder.receiveMapView.visibility = View.GONE
 
         when (currentMessage.messageType) {
@@ -160,15 +162,16 @@ class MessageAdapter(
                     val files = FileHelper().readFilesAsByteArray(imageMessage.pathNames)
                     val adapter = ImageGalleryAdapter(files)
                     viewHolder.receiveImageGallery.adapter = adapter
-                    viewHolder.receiveImageGallery.layoutManager =
-                        LinearLayoutManager(holder.itemView.context, LinearLayoutManager.HORIZONTAL, false)
+                    viewHolder.receiveImageGallery.layoutManager = LinearLayoutManager(holder.itemView.context, LinearLayoutManager.HORIZONTAL, false)
+                    viewHolder.receiveImageGalleryTitle.text = imageMessage.legend
+                    viewHolder.receiveImageGalleryContainer.visibility = View.VISIBLE
                     viewHolder.receiveImageGallery.visibility = View.VISIBLE
+                    viewHolder.receiveImageGalleryTitle.visibility = View.VISIBLE
                 }
             }
             MessageType.LOCATION -> {}
         }
     }
-
 
     @SuppressLint("SetTextI18n")
     private fun setupAudioPlayer(

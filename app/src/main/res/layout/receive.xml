@@ -62,14 +62,30 @@
     </LinearLayout>
 
     <!-- Image Gallery -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/receiveImageGallery"
+    <LinearLayout
+        android:id="@+id/receiveImageGalleryContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="5dp"
-        android:visibility="gone"
-        android:orientation="horizontal"
-        android:clipToPadding="false"
-        android:padding="5dp" />
+        android:orientation="vertical"
+        android:padding="10dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/receiveImageGalleryTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/receiveImageGallery"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:clipToPadding="false"
+            android:orientation="horizontal"
+            android:padding="5dp" />
+    </LinearLayout>
 
 </RelativeLayout>
