@@ -11,13 +11,23 @@
     android:paddingRight="0dp"
     tools:context=".MainActivity">
 
+    <!-- image -->
+    <ImageView
+        android:id="@+id/applicationLogo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:contentDescription="Received image message"
+        android:scaleType="centerCrop"
+        android:alpha="0.6"
+        android:src="@drawable/imagem_inicial"  />
+
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/chatToolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="#171717"
-        app:titleTextColor="@color/white">
-    </androidx.appcompat.widget.Toolbar>
+        app:titleTextColor="@color/white"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/chatRecycler"

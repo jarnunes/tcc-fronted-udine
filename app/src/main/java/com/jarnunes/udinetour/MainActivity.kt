@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.TextView
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
@@ -68,7 +69,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
         if (messageService.empty()) {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
-                    addSystemWaitProcess(R.string.system_msg_search_nearby_places)
+                    addFirstSystemMessage()
                     val location = UserLocationService.getUserLocation()
                     val placesResponse = integrationService.getNearbyPlacesAsync(location)
                     messageService.createMapMessage(location, placesResponse.places)
@@ -77,7 +78,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                 } catch (e: Exception) {
                     showErrorDialog("Obter localização, locais próximos e gerar descrição.", e)
                 }
-                removeSystemWaitProcess()
+                removeFirstSystemMessage()
             }
             notifyDataSetChanged()
         }
@@ -194,6 +195,17 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
     private fun scrollToBottom() {
         binding.chatRecycler.scrollToPosition(messageService.messageListCount() - 1)
     }
+
+    private fun addFirstSystemMessage(){
+        binding.applicationLogo.visibility = View.VISIBLE
+        addSystemWaitProcess(R.string.system_msg_search_nearby_places)
+    }
+
+    private fun removeFirstSystemMessage(){
+        binding.applicationLogo.visibility = View.GONE
+        removeSystemWaitProcess()
+    }
+
 
     private fun addSystemWaitProcess(@StringRes resId: Int) {
         messageService.createSystemWaitStartMessage(resId)
