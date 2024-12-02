@@ -11,11 +11,11 @@
     <string name="txt_sent_audio_description">This is a sent audio</string>
 
     <!-- API -->
-    <!-- Elastic Beanstalk -->
-    <!-- <string name="url_udine_aws_function">http://tcc-backend.sa-east-1.elasticbeanstalk.com/</string>-->
+    <!-- EC2 -->
+    <string name="url_udine_aws_function">http://54.232.128.36:5000</string>
 
     <!-- Local Network -->
-     <string name="url_udine_aws_function">http://192.168.18.2:5000</string>
+    <!-- <string name="url_udine_aws_function">http://192.168.18.2:5000</string>-->
 
     <!-- Guilt's Network-->
     <!-- <string name="url_udine_aws_function">http://192.168.18.9:5000</string>-->

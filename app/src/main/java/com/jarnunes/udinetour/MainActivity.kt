@@ -15,6 +15,7 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.gms.common.util.CollectionUtils
 import com.jarnunes.udinetour.adapter.MessageAdapter
 import com.jarnunes.udinetour.commons.ExceptionUtils
 import com.jarnunes.udinetour.commons.ILog
@@ -29,6 +30,7 @@ import com.jarnunes.udinetour.maps.MapService
 import com.jarnunes.udinetour.maps.location.ActivityResultProvider
 import com.jarnunes.udinetour.maps.location.UserLocationService
 import com.jarnunes.udinetour.message.MessageService
+import com.jarnunes.udinetour.message.UserLocation
 import com.jarnunes.udinetour.recorder.AudioService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -113,18 +115,22 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
     }
 
     private fun saveImagesAndCreateImageMessages(response: QuestionResponse) {
-        if (response.placePhotos.isNotEmpty()) {
+        if (!CollectionUtils.isEmpty(response.placePhotos)) {
             response.placePhotos.forEach { place ->
                 val photoNames = ArrayList<String>()
-                place.photos.map {
-                    FileHelper().createImageFile(
-                        it.name,
-                        it.content,
-                        applicationContext
-                    )
+                try {
+                    place.photos.map {
+                        FileHelper().createImageFile(
+                            it.name,
+                            it.content,
+                            applicationContext
+                        )
+                    }
+                        .map { it.absolutePath }.forEach { path -> photoNames.add(path) }
+                    messageService.createImagesMessage(place.name, photoNames)
+                } catch (e: Exception) {
+                    ILog.e(ILog.INTEGRATION_SERVICE, e)
                 }
-                    .map { it.absolutePath }.forEach { path -> photoNames.add(path) }
-                messageService.createImagesMessage(place.name, photoNames)
             }
         }
     }
@@ -170,7 +176,7 @@ class MainActivity : AppCompatActivity(), ActivityResultProvider {
                         saveImagesAndCreateImageMessages(answerResponse)
                     }
                 } catch (e: Exception) {
-                    showErrorDialog("Responser pergunta de texto", e)
+                    showErrorDialog("Responder pergunta de texto", e)
                 }
 
                 removeSystemWaitProcess()
